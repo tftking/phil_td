@@ -16,6 +16,13 @@ const GUIDE: Array = [
 	["Str. flush",    "Storm",   Color(0.48, 0.08, 0.95)],
 	["Royal flush",   "Nuke",    Color(1.00, 0.40, 0.00)],
 ]
+const MAP_NAMES: Array   = ["Valley", "Gauntlet", "Maze"]
+const DIFF_NAMES: Array  = ["Easy",   "Normal",   "Hard"]
+const DIFF_DESCS: Array  = [
+	"0.65x HP  •  25 lives",
+	"1.0x HP  •  20 lives",
+	"1.52x HP  •  12 lives"
+]
 
 # Top bar
 var lives_label:  Label
@@ -29,7 +36,6 @@ var speed_val:    float = 1.0
 # Boss bar
 var boss_bar_panel: ColorRect
 var boss_bar:       ProgressBar
-var boss_name_lbl:  Label
 
 # Bottom bar
 var rank_label:          Label
@@ -52,8 +58,15 @@ var tower_sell_lbl:    Label
 var wave_announce_label: Label
 var countdown_label:     Label
 var sell_popup_label:    Label
+var income_popup_label:  Label
 var game_over_panel:     ColorRect
 var start_screen:        ColorRect
+
+# Start-screen selection
+var map_btns:  Array = []
+var diff_btns: Array = []
+var sel_map:   int   = 0
+var sel_diff:  int   = 1
 
 func _ready() -> void:
 	layer = 10
@@ -75,13 +88,12 @@ func _build_top_bar() -> void:
 	bar.position = Vector2(0, 0)
 	bar.size = Vector2(1280, 38)
 	add_child(bar)
-	lives_label  = _lbl("Lives: 20",  Vector2(12, 9))
+	lives_label  = _lbl("Lives: %d" % GameManager.lives, Vector2(12, 9))
 	gold_label   = _lbl("Gold: 100",  Vector2(165, 9))
 	wave_label   = _lbl("Wave: 0",    Vector2(318, 9))
 	kills_label  = _lbl("Kills: 0",   Vector2(468, 9))
 	status_label = _lbl("",           Vector2(618, 9))
 	status_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
-	# Speed toggle
 	speed_btn = _btn("2x", Vector2(900, 3), Vector2(54, 30))
 	speed_btn.pressed.connect(_on_speed_toggle)
 
@@ -92,10 +104,8 @@ func _build_boss_bar() -> void:
 	boss_bar_panel.size = Vector2(418, 28)
 	boss_bar_panel.visible = false
 	add_child(boss_bar_panel)
-
-	boss_name_lbl = _lbl("BOSS", Vector2(278, 46), 12)
-	boss_name_lbl.add_theme_color_override("font_color", Color(0.9, 0.4, 1.0))
-
+	var bl := _lbl("BOSS", Vector2(278, 46), 12)
+	bl.add_theme_color_override("font_color", Color(0.9, 0.4, 1.0))
 	boss_bar = ProgressBar.new()
 	boss_bar.position = Vector2(322, 46)
 	boss_bar.size = Vector2(358, 16)
@@ -110,8 +120,7 @@ func _build_right_panel() -> void:
 	panel.size = Vector2(315, 438)
 	add_child(panel)
 	var px: float = 978.0
-
-	_lbl("Wave progress", Vector2(px, 54), 13).add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
+	_lbl("Wave progress", Vector2(px, 54), 13).add_theme_color_override("font_color", Color(0.50, 0.50, 0.50))
 	enemy_bar = ProgressBar.new()
 	enemy_bar.position = Vector2(px, 72)
 	enemy_bar.size = Vector2(285, 18)
@@ -119,12 +128,10 @@ func _build_right_panel() -> void:
 	enemy_bar.value = 0
 	add_child(enemy_bar)
 	enemy_count_label = _lbl("Waiting…", Vector2(px, 96), 12)
-	enemy_count_label.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
-
+	enemy_count_label.add_theme_color_override("font_color", Color(0.62, 0.62, 0.62))
 	_sep(px, 116, 285)
-
-	_lbl("Tower info", Vector2(px, 126), 13).add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
-	_lbl("Hover a tower  •  right-click to sell", Vector2(px, 144), 11).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
+	_lbl("Tower info", Vector2(px, 126), 13).add_theme_color_override("font_color", Color(0.50, 0.50, 0.50))
+	_lbl("Hover tower  •  right-click sells", Vector2(px, 144), 11).add_theme_color_override("font_color", Color(0.36, 0.36, 0.36))
 	tower_name_lbl   = _lbl("—",  Vector2(px, 163), 17)
 	tower_dmg_lbl    = _lbl("",   Vector2(px, 186), 12)
 	tower_rate_lbl   = _lbl("",   Vector2(px + 148, 186), 12)
@@ -132,14 +139,12 @@ func _build_right_panel() -> void:
 	tower_splash_lbl = _lbl("",   Vector2(px + 148, 203), 12)
 	tower_sell_lbl   = _lbl("",   Vector2(px, 220), 12)
 	for l in [tower_dmg_lbl, tower_rate_lbl, tower_range_lbl, tower_splash_lbl, tower_sell_lbl]:
-		l.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
-
+		l.add_theme_color_override("font_color", Color(0.68, 0.68, 0.68))
 	_sep(px, 240, 285)
-
-	_lbl("Hand → Tower", Vector2(px, 250), 13).add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
+	_lbl("Hand → Tower", Vector2(px, 250), 13).add_theme_color_override("font_color", Color(0.50, 0.50, 0.50))
 	for i in GUIDE.size():
 		var row: Array = GUIDE[i]
-		var gl := _lbl("%-16s %s" % [row[0], row[1]], Vector2(px, 269 + i * 19), 12)
+		var gl := _lbl("%-16s %s" % [row[0], row[1]], Vector2(px, 268 + i * 19), 12)
 		gl.add_theme_color_override("font_color", row[2].lightened(0.2))
 
 func _build_bottom_bar() -> void:
@@ -149,12 +154,11 @@ func _build_bottom_bar() -> void:
 	bar.size = Vector2(1280, 240)
 	add_child(bar)
 	rank_label = _lbl("Select 5 cards", Vector2(30, 492), 22)
-	rank_label.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+	rank_label.add_theme_color_override("font_color", Color(0.68, 0.68, 0.68))
 	placing_label = _lbl("", Vector2(30, 528), 15)
 	placing_label.add_theme_color_override("font_color", Color(0.22, 1.0, 0.38))
 	placing_label.visible = false
-	_lbl("Yellow cell = upgrade existing tower", Vector2(30, 556), 12).add_theme_color_override("font_color", Color(0.40, 0.40, 0.40))
-	_lbl("Right-click tower to sell", Vector2(30, 574), 12).add_theme_color_override("font_color", Color(0.40, 0.40, 0.40))
+	_lbl("Yellow = upgrade  •  Right-click tower to sell", Vector2(30, 556), 12).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
 	discard_count_label = _lbl("Discards: 3", Vector2(1040, 492))
 	play_btn = _btn("Play Hand", Vector2(1055, 518), Vector2(155, 44))
 	play_btn.pressed.connect(_on_play_pressed)
@@ -167,13 +171,18 @@ func _build_overlays() -> void:
 	wave_announce_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.28))
 	wave_announce_label.modulate.a = 0.0
 
-	countdown_label = _lbl("", Vector2(595, 185), 72)
-	countdown_label.add_theme_color_override("font_color", Color(0.92, 0.92, 0.92))
+	countdown_label = _lbl("", Vector2(380, 160), 32)
+	countdown_label.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	countdown_label.visible = false
+	countdown_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 
 	sell_popup_label = _lbl("", Vector2(590, 320), 22)
 	sell_popup_label.add_theme_color_override("font_color", Color(0.22, 1.0, 0.38))
 	sell_popup_label.modulate.a = 0.0
+
+	income_popup_label = _lbl("", Vector2(590, 280), 18)
+	income_popup_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.28))
+	income_popup_label.modulate.a = 0.0
 
 	game_over_panel = ColorRect.new()
 	game_over_panel.color = Color(0, 0, 0, 0.80)
@@ -181,73 +190,125 @@ func _build_overlays() -> void:
 	game_over_panel.size = Vector2(1280, 720)
 	game_over_panel.visible = false
 	add_child(game_over_panel)
-
 	var go_lbl := Label.new()
 	go_lbl.text = "GAME OVER"
-	go_lbl.position = Vector2(420, 228)
+	go_lbl.position = Vector2(418, 228)
 	go_lbl.add_theme_font_size_override("font_size", 72)
 	go_lbl.add_theme_color_override("font_color", Color(0.95, 0.15, 0.15))
 	game_over_panel.add_child(go_lbl)
-
 	var stats_lbl := Label.new()
 	stats_lbl.name = "StatsLabel"
-	stats_lbl.position = Vector2(420, 330)
+	stats_lbl.position = Vector2(418, 330)
 	stats_lbl.add_theme_font_size_override("font_size", 24)
 	stats_lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	game_over_panel.add_child(stats_lbl)
-
 	var hs_lbl := Label.new()
 	hs_lbl.name = "HighScoreLabel"
-	hs_lbl.position = Vector2(420, 364)
+	hs_lbl.position = Vector2(418, 364)
 	hs_lbl.add_theme_font_size_override("font_size", 18)
 	hs_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
 	game_over_panel.add_child(hs_lbl)
-
-	var restart_btn := _btn("Play Again", Vector2(563, 410), Vector2(154, 52))
+	var restart_btn := _btn("Play Again", Vector2(563, 412), Vector2(154, 52))
 	restart_btn.pressed.connect(_on_restart_pressed)
 	game_over_panel.add_child(restart_btn)
 
 func _build_start_screen() -> void:
 	start_screen = ColorRect.new()
-	start_screen.color = Color(0.04, 0.06, 0.04, 0.96)
+	start_screen.color = Color(0.04, 0.06, 0.04, 0.97)
 	start_screen.position = Vector2.ZERO
 	start_screen.size = Vector2(1280, 720)
 	add_child(start_screen)
 
 	var title := Label.new()
-	title.text = "Poker TD"
-	title.position = Vector2(450, 190)
-	title.add_theme_font_size_override("font_size", 82)
+	title.text = "Poker  TD"
+	title.position = Vector2(438, 72)
+	title.add_theme_font_size_override("font_size", 88)
 	title.add_theme_color_override("font_color", Color(0.95, 0.82, 0.22))
 	start_screen.add_child(title)
 
 	var sub := Label.new()
-	sub.text = "Build towers with poker hands. Defend the base."
-	sub.position = Vector2(340, 298)
-	sub.add_theme_font_size_override("font_size", 20)
-	sub.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+	sub.text = "Select cards  →  Play hand  →  Place tower  •  Defend the base"
+	sub.position = Vector2(272, 188)
+	sub.add_theme_font_size_override("font_size", 18)
+	sub.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	start_screen.add_child(sub)
 
-	# Quick guide on start screen
-	var guide_lbl := Label.new()
-	guide_lbl.text = "Select 5 cards  →  Play Hand  →  Click grid to place tower\nRight-click tower to sell  •  Yellow cell = upgrade"
-	guide_lbl.position = Vector2(330, 345)
-	guide_lbl.add_theme_font_size_override("font_size", 15)
-	guide_lbl.add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
-	start_screen.add_child(guide_lbl)
+	# Map selection
+	var map_lbl := Label.new()
+	map_lbl.text = "Map"
+	map_lbl.position = Vector2(272, 240)
+	map_lbl.add_theme_font_size_override("font_size", 15)
+	map_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	start_screen.add_child(map_lbl)
+	for i in MAP_NAMES.size():
+		var b := Button.new()
+		b.text = MAP_NAMES[i]
+		b.position = Vector2(272 + i * 170, 264)
+		b.size = Vector2(155, 38)
+		b.pressed.connect(func(): _select_map(i))
+		start_screen.add_child(b)
+		map_btns.append(b)
+
+	# Difficulty selection
+	var diff_lbl := Label.new()
+	diff_lbl.text = "Difficulty"
+	diff_lbl.position = Vector2(272, 322)
+	diff_lbl.add_theme_font_size_override("font_size", 15)
+	diff_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	start_screen.add_child(diff_lbl)
+	for i in DIFF_NAMES.size():
+		var b := Button.new()
+		b.text = DIFF_NAMES[i]
+		b.position = Vector2(272 + i * 170, 346)
+		b.size = Vector2(155, 38)
+		b.pressed.connect(func(): _select_diff(i))
+		start_screen.add_child(b)
+		diff_btns.append(b)
+
+	var diff_desc_lbl := Label.new()
+	diff_desc_lbl.name = "DiffDescLabel"
+	diff_desc_lbl.position = Vector2(272, 396)
+	diff_desc_lbl.add_theme_font_size_override("font_size", 13)
+	diff_desc_lbl.add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
+	start_screen.add_child(diff_desc_lbl)
 
 	if GameManager.high_score > 0:
-		var hs_lbl := Label.new()
-		hs_lbl.text = "Best: Wave %d" % GameManager.high_score
-		hs_lbl.position = Vector2(548, 396)
-		hs_lbl.add_theme_font_size_override("font_size", 18)
-		hs_lbl.add_theme_color_override("font_color", Color(1.0, 0.82, 0.22))
-		start_screen.add_child(hs_lbl)
+		var hs := Label.new()
+		hs.text = "Best: Wave %d" % GameManager.high_score
+		hs.position = Vector2(548, 430)
+		hs.add_theme_font_size_override("font_size", 17)
+		hs.add_theme_color_override("font_color", Color(1.0, 0.82, 0.22))
+		start_screen.add_child(hs)
 
-	var start_btn := _btn("Start Game", Vector2(560, 436), Vector2(160, 56))
+	var start_btn := Button.new()
+	start_btn.text = "Start Game"
+	start_btn.position = Vector2(560, 462)
+	start_btn.size = Vector2(160, 56)
 	start_btn.add_theme_font_size_override("font_size", 20)
 	start_btn.pressed.connect(_on_start_pressed)
 	start_screen.add_child(start_btn)
+
+	_update_selection_visuals()
+
+func _select_map(idx: int) -> void:
+	sel_map = idx
+	GameManager.selected_map = idx
+	_update_selection_visuals()
+
+func _select_diff(idx: int) -> void:
+	sel_diff = idx
+	GameManager.difficulty = idx
+	GameManager.lives = GameManager.DIFFICULTIES[idx].lives
+	lives_label.text = "Lives: %d" % GameManager.lives
+	_update_selection_visuals()
+
+func _update_selection_visuals() -> void:
+	for i in map_btns.size():
+		map_btns[i].modulate = Color.WHITE if i == sel_map else Color(0.55, 0.55, 0.55)
+	for i in diff_btns.size():
+		diff_btns[i].modulate = Color.WHITE if i == sel_diff else Color(0.55, 0.55, 0.55)
+	var ddl: Label = start_screen.get_node_or_null("DiffDescLabel")
+	if ddl: ddl.text = DIFF_DESCS[sel_diff]
 
 # ---------------------------------------------------------------------------
 # Signal wiring
@@ -266,7 +327,9 @@ func _connect_gm_signals() -> void:
 	GameManager.boss_cleared.connect(func():
 		var tw := create_tween()
 		tw.tween_property(boss_bar_panel, "modulate:a", 0.0, 0.5)
-		tw.tween_callback(func(): boss_bar_panel.visible = false; boss_bar_panel.modulate.a = 1.0))
+		tw.tween_callback(func():
+			boss_bar_panel.visible = false
+			boss_bar_panel.modulate.a = 1.0))
 
 func _connect_card_hand() -> void:
 	var ch := _ch()
@@ -290,10 +353,10 @@ func _on_hand_updated(_hand: Array) -> void:
 	if pr >= 0:
 		rank_label.text = HAND_NAMES[pr]
 		rank_label.add_theme_color_override("font_color",
-			Color(1.0, 0.85, 0.25) if pr > 0 else Color(0.48, 0.48, 0.48))
+			Color(1.0, 0.85, 0.25) if pr > 0 else Color(0.46, 0.46, 0.46))
 	else:
 		rank_label.text = "Select 5 cards"
-		rank_label.add_theme_color_override("font_color", Color(0.70, 0.70, 0.70))
+		rank_label.add_theme_color_override("font_color", Color(0.68, 0.68, 0.68))
 
 func _on_hand_evaluated(rank: int, _cards: Array) -> void:
 	status_label.text = "" if rank > 0 else "High card — no placement"
@@ -310,7 +373,7 @@ func update_wave_progress(remaining: int, total: int) -> void:
 	if total <= 0: return
 	enemy_bar.max_value = total
 	enemy_bar.value = total - remaining
-	enemy_count_label.text = "%d / %d enemies cleared" % [total - remaining, total]
+	enemy_count_label.text = "%d / %d cleared" % [total - remaining, total]
 
 func show_wave_announcement(wave_num: int) -> void:
 	wave_announce_label.text = "Wave  %d" % wave_num
@@ -321,13 +384,16 @@ func show_wave_announcement(wave_num: int) -> void:
 	tw.tween_property(wave_announce_label, "modulate:a", 0.0, 0.65)
 	tw.tween_callback(func(): wave_announce_label.visible = false)
 
-func run_countdown() -> void:
+func run_countdown(wave_num: int = 0, wave_kills_count: int = 0) -> void:
 	countdown_label.visible = true
+	if wave_num > 0:
+		countdown_label.text = "Wave %d cleared!   +%d kills" % [wave_num, wave_kills_count]
+		await get_tree().create_timer(1.4).timeout
 	for i in range(3, 0, -1):
 		countdown_label.text = str(i)
-		await get_tree().create_timer(0.75).timeout
+		await get_tree().create_timer(0.72).timeout
 	countdown_label.text = "Go!"
-	await get_tree().create_timer(0.50).timeout
+	await get_tree().create_timer(0.48).timeout
 	countdown_label.visible = false
 	enemy_count_label.text = "Spawning…"
 	enemy_bar.value = 0
@@ -342,14 +408,14 @@ func show_tower_info(tower: Node) -> void:
 	tower_sell_lbl.text   = "Sell: +%d gold" % tower.sell_value
 
 func clear_tower_info() -> void:
-	tower_name_lbl.text   = "—"
+	tower_name_lbl.text = "—"
 	tower_name_lbl.add_theme_color_override("font_color", Color.WHITE)
 	for l in [tower_dmg_lbl, tower_rate_lbl, tower_range_lbl, tower_splash_lbl, tower_sell_lbl]:
 		l.text = ""
 
 func show_sell_feedback(amount: int) -> void:
-	sell_popup_label.text = "+%d gold" % amount
-	sell_popup_label.position = Vector2(590, 330)
+	sell_popup_label.text = "+%d gold (sold)" % amount
+	sell_popup_label.position = Vector2(560, 330)
 	sell_popup_label.modulate.a = 1.0
 	sell_popup_label.visible = true
 	var tw := create_tween()
@@ -357,12 +423,24 @@ func show_sell_feedback(amount: int) -> void:
 	tw.parallel().tween_property(sell_popup_label, "modulate:a", 0.0, 0.75)
 	tw.tween_callback(func(): sell_popup_label.visible = false)
 
+func show_income_popup(amount: int) -> void:
+	income_popup_label.text = "+%d gold (income)" % amount
+	income_popup_label.position = Vector2(560, 290)
+	income_popup_label.modulate.a = 1.0
+	income_popup_label.visible = true
+	var tw := create_tween()
+	tw.tween_property(income_popup_label, "position:y", 232.0, 0.9).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(income_popup_label, "modulate:a", 0.0, 0.9)
+	tw.tween_callback(func(): income_popup_label.visible = false)
+
 func _on_run_over() -> void:
 	Engine.time_scale = 1.0
 	speed_val = 1.0
 	speed_btn.text = "2x"
 	var stats: Label = game_over_panel.get_node_or_null("StatsLabel")
-	if stats: stats.text = "Wave %d  •  %d kills" % [GameManager.wave_number, GameManager.kills]
+	if stats: stats.text = "Wave %d  •  %d kills  •  %s" % [
+		GameManager.wave_number, GameManager.kills,
+		GameManager.DIFFICULTIES[GameManager.difficulty].name]
 	var hs_lbl: Label = game_over_panel.get_node_or_null("HighScoreLabel")
 	if hs_lbl:
 		hs_lbl.text = ("New best!" if GameManager.wave_number >= GameManager.high_score

@@ -30,6 +30,12 @@ func _on_hit() -> void:
 		for e in get_tree().get_nodes_in_group("enemies"):
 			if is_instance_valid(e) and global_position.distance_to(e.global_position) <= splash_radius:
 				e.take_damage(damage)
+		var fx_scene = load("res://scenes/SplashEffect.tscn")
+		if fx_scene:
+			var fx = fx_scene.instantiate()
+			get_tree().current_scene.add_child(fx)
+			fx.global_position = global_position
+			fx.init(splash_radius, proj_color)
 	else:
 		if is_instance_valid(target):
 			target.take_damage(damage)

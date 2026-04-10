@@ -8,7 +8,13 @@ var tower_color: Color  = Color(0.35, 0.60, 0.95)
 var splash_radius: float = 0.0
 var projectile_speed: float = 220.0
 var sell_value: int     = 20
-var hand_rank: int      = 0   # CardHand.HandRank value — used for upgrade logic
+var hand_rank: int      = 0
+var is_highlighted: bool = false
+
+func set_highlighted(v: bool) -> void:
+	if is_highlighted != v:
+		is_highlighted = v
+		queue_redraw()
 
 var target: Node2D = null
 var fire_timer: float = 0.0
@@ -57,8 +63,13 @@ func _fire() -> void:
 	proj.init(target, damage, projectile_speed, splash_radius)
 
 func _draw() -> void:
-	# Range ring
-	draw_arc(Vector2.ZERO, range_radius, 0, TAU, 64, Color(tower_color.r, tower_color.g, tower_color.b, 0.12), 1.0)
+	var ring_alpha: float = 0.45 if is_highlighted else 0.12
+	var ring_width: float = 1.5  if is_highlighted else 1.0
+	draw_arc(Vector2.ZERO, range_radius, 0, TAU, 64,
+		Color(tower_color.r, tower_color.g, tower_color.b, ring_alpha), ring_width)
+	if is_highlighted:
+		draw_circle(Vector2.ZERO, range_radius,
+			Color(tower_color.r, tower_color.g, tower_color.b, 0.06))
 	# Base
 	draw_circle(Vector2.ZERO, 16, tower_color)
 	draw_arc(Vector2.ZERO, 16, 0, TAU, 24, Color(0, 0, 0, 0.5), 2.0)
