@@ -50,6 +50,7 @@ func take_damage(amount: int) -> void:
 
 func _die() -> void:
 	GameManager.add_gold(gold_reward)
+	GameManager.add_kill()
 	died.emit(self)
 	queue_free()
 

@@ -28,7 +28,7 @@ func _ready() -> void:
 
 	control = Control.new()
 	control.set_anchors_preset(Control.PRESET_FULL_RECT)
-	control.mouse_filter = Control.MOUSE_FILTER_STOP
+	control.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(control)
 
 	control.draw.connect(_on_draw)

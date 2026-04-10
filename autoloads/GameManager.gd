@@ -5,15 +5,21 @@ signal lives_changed(amount: int)
 signal wave_started(wave_number: int)
 signal wave_cleared(wave_number: int)
 signal run_over()
+signal kill_registered()
 
 var gold: int = 100
 var lives: int = 20
 var wave_number: int = 0
+var kills: int = 0
 var state: String = "idle"  # idle | wave | shop | over
 
 func add_gold(amount: int) -> void:
 	gold += amount
 	gold_changed.emit(gold)
+
+func add_kill() -> void:
+	kills += 1
+	kill_registered.emit()
 
 func spend_gold(amount: int) -> bool:
 	if gold < amount:
@@ -42,4 +48,5 @@ func reset() -> void:
 	gold = 100
 	lives = 20
 	wave_number = 0
+	kills = 0
 	state = "idle"
