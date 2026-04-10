@@ -47,11 +47,14 @@ func _on_spawn_timeout() -> void:
 
 func _do_spawn(entry: Dictionary) -> void:
 	var e = enemy_scene.instantiate()
-	if entry.has("health"): e.max_health = entry["health"]
+	if entry.has("health"): e.max_health  = entry["health"]
 	if entry.has("speed"):  e.move_speed  = entry["speed"]
 	if entry.has("reward"): e.gold_reward = entry["reward"]
 	if entry.has("color"):  e.enemy_color = entry["color"]
-	e.is_boss = entry.get("is_boss", false)
+	e.is_boss     = entry.get("is_boss", false)
+	e.enemy_type  = entry.get("enemy_type", 0)
+	if e.is_boss:
+		e.enemy_type = 3  # Type.BOSS
 	get_tree().current_scene.add_child(e)
 	e.init(world_path)
 	e.died.connect(_on_enemy_done)

@@ -59,7 +59,12 @@ var wave_announce_label: Label
 var countdown_label:     Label
 var sell_popup_label:    Label
 var income_popup_label:  Label
+var penalty_popup_label: Label
+var modifier_banner:     ColorRect
+var modifier_title_lbl:  Label
+var modifier_desc_lbl:   Label
 var game_over_panel:     ColorRect
+var victory_panel:       ColorRect
 var start_screen:        ColorRect
 var pause_panel:         ColorRect
 
@@ -185,6 +190,28 @@ func _build_overlays() -> void:
 	income_popup_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.28))
 	income_popup_label.modulate.a = 0.0
 
+	penalty_popup_label = _lbl("", Vector2(530, 240), 18)
+	penalty_popup_label.add_theme_color_override("font_color", Color(0.95, 0.25, 0.25))
+	penalty_popup_label.modulate.a = 0.0
+
+	# Wave modifier banner
+	modifier_banner = ColorRect.new()
+	modifier_banner.color = Color(0.06, 0.06, 0.06, 0.88)
+	modifier_banner.position = Vector2(280, 68)
+	modifier_banner.size = Vector2(400, 52)
+	modifier_banner.visible = false
+	add_child(modifier_banner)
+	modifier_title_lbl = Label.new()
+	modifier_title_lbl.position = Vector2(290, 74)
+	modifier_title_lbl.add_theme_font_size_override("font_size", 20)
+	modifier_title_lbl.add_theme_color_override("font_color", Color.WHITE)
+	add_child(modifier_title_lbl)
+	modifier_desc_lbl = Label.new()
+	modifier_desc_lbl.position = Vector2(290, 97)
+	modifier_desc_lbl.add_theme_font_size_override("font_size", 13)
+	modifier_desc_lbl.add_theme_color_override("font_color", Color(0.72, 0.72, 0.72))
+	add_child(modifier_desc_lbl)
+
 	game_over_panel = ColorRect.new()
 	game_over_panel.color = Color(0, 0, 0, 0.80)
 	game_over_panel.position = Vector2.ZERO
@@ -213,7 +240,34 @@ func _build_overlays() -> void:
 	restart_btn.pressed.connect(_on_restart_pressed)
 	game_over_panel.add_child(restart_btn)
 
-	# Pause panel
+	# Victory panel
+	victory_panel = ColorRect.new()
+	victory_panel.color = Color(0.0, 0.06, 0.0, 0.88)
+	victory_panel.position = Vector2.ZERO
+	victory_panel.size = Vector2(1280, 720)
+	victory_panel.visible = false
+	add_child(victory_panel)
+	var v_title := Label.new()
+	v_title.text = "You Win!"
+	v_title.position = Vector2(478, 210)
+	v_title.add_theme_font_size_override("font_size", 82)
+	v_title.add_theme_color_override("font_color", Color(0.25, 1.0, 0.38))
+	victory_panel.add_child(v_title)
+	var v_sub := Label.new()
+	v_sub.text = "Survived all %d waves" % GameManager.WIN_WAVE
+	v_sub.position = Vector2(438, 318)
+	v_sub.add_theme_font_size_override("font_size", 26)
+	v_sub.add_theme_color_override("font_color", Color(0.80, 0.80, 0.80))
+	victory_panel.add_child(v_sub)
+	var v_stats := Label.new()
+	v_stats.name = "VictoryStats"
+	v_stats.position = Vector2(438, 360)
+	v_stats.add_theme_font_size_override("font_size", 20)
+	v_stats.add_theme_color_override("font_color", Color(0.72, 0.72, 0.72))
+	victory_panel.add_child(v_stats)
+	var v_btn := _btn("Play Again", Vector2(563, 420), Vector2(154, 52))
+	v_btn.pressed.connect(_on_restart_pressed)
+	victory_panel.add_child(v_btn)
 	pause_panel = ColorRect.new()
 	pause_panel.color = Color(0, 0, 0, 0.72)
 	pause_panel.position = Vector2.ZERO
@@ -319,14 +373,8 @@ func _build_start_screen() -> void:
 	start_btn.pressed.connect(_on_start_pressed)
 	start_screen.add_child(start_btn)
 
-	# Gemini opt-in (hidden unless api_key is set in GeminiWave)
-	if not GeminiWave.api_key.is_empty():
-		var gemini_btn := CheckButton.new()
-		gemini_btn.text = "AI wave generation (Gemini)"
-		gemini_btn.position = Vector2(272, 540)
-		gemini_btn.button_pressed = GeminiWave.use_gemini
-		gemini_btn.toggled.connect(func(v: bool): GeminiWave.use_gemini = v)
-		start_screen.add_child(gemini_btn)
+	# Settings panel at bottom of start screen
+	_build_settings_panel(start_screen, 610.0)
 
 	_update_selection_visuals()
 
@@ -359,6 +407,7 @@ func _connect_gm_signals() -> void:
 	GameManager.wave_started.connect(func(w): wave_label.text = "Wave: %d" % w)
 	GameManager.kill_registered.connect(func(): kills_label.text = "Kills: %d" % GameManager.kills)
 	GameManager.run_over.connect(_on_run_over)
+	GameManager.run_won.connect(func(): show_victory_screen())
 	GameManager.wave_cleared.connect(func(_w): status_label.text = "Wave cleared!")
 	GameManager.boss_health_changed.connect(func(hp, max_hp):
 		boss_bar_panel.visible = true
@@ -491,6 +540,87 @@ func _on_run_over() -> void:
 
 func show_pause_screen(show: bool) -> void:
 	pause_panel.visible = show
+
+func show_modifier_banner(mod: Dictionary) -> void:
+	modifier_title_lbl.text = mod.get("label", "")
+	modifier_title_lbl.add_theme_color_override("font_color", mod.get("color", Color.WHITE))
+	modifier_desc_lbl.text  = mod.get("desc", "")
+	modifier_banner.visible = true
+	modifier_banner.modulate.a = 1.0
+	var tw := create_tween()
+	tw.tween_interval(2.2)
+	tw.tween_property(modifier_banner,    "modulate:a", 0.0, 0.5)
+	tw.parallel().tween_property(modifier_title_lbl, "modulate:a", 0.0, 0.5)
+	tw.parallel().tween_property(modifier_desc_lbl,  "modulate:a", 0.0, 0.5)
+	tw.tween_callback(func():
+		modifier_banner.visible = false
+		modifier_title_lbl.modulate.a = 1.0
+		modifier_desc_lbl.modulate.a  = 1.0)
+
+func show_penalty_popup() -> void:
+	penalty_popup_label.text = "High card! -5 gold"
+	penalty_popup_label.position = Vector2(530, 250)
+	penalty_popup_label.modulate.a = 1.0
+	penalty_popup_label.visible = true
+	var tw := create_tween()
+	tw.tween_property(penalty_popup_label, "position:y", 196.0, 0.7).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(penalty_popup_label, "modulate:a", 0.0, 0.7)
+	tw.tween_callback(func(): penalty_popup_label.visible = false)
+
+func show_victory_screen() -> void:
+	Engine.time_scale = 1.0
+	speed_val = 1.0
+	speed_btn.text = "2x"
+	var vs: Label = victory_panel.get_node_or_null("VictoryStats")
+	if vs:
+		vs.text = "%d kills  •  %s" % [GameManager.kills,
+			GameManager.DIFFICULTIES[GameManager.difficulty].name]
+	victory_panel.visible = true
+	play_btn.disabled   = true
+	discard_btn.disabled = true
+
+func _build_settings_panel(parent: Node, base_y: float) -> void:
+	var sp := ColorRect.new()
+	sp.color = Color(0.06, 0.06, 0.06, 0.95)
+	sp.position = Vector2(272, base_y)
+	sp.size = Vector2(448, 140)
+	parent.add_child(sp)
+
+	var lbl := Label.new()
+	lbl.text = "Settings"
+	lbl.position = Vector2(280, base_y + 10)
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	parent.add_child(lbl)
+
+	# Volume
+	var vlbl := Label.new()
+	vlbl.text = "Volume"
+	vlbl.position = Vector2(280, base_y + 36)
+	vlbl.add_theme_font_size_override("font_size", 13)
+	vlbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	parent.add_child(vlbl)
+	var vslider := HSlider.new()
+	vslider.position = Vector2(350, base_y + 36)
+	vslider.size     = Vector2(200, 20)
+	vslider.min_value = -40.0
+	vslider.max_value = 6.0
+	vslider.value     = GameManager.volume_db
+	vslider.value_changed.connect(func(v): GameManager.apply_volume(v))
+	parent.add_child(vslider)
+
+	# Fullscreen
+	var fslbl := Label.new()
+	fslbl.text = "Fullscreen"
+	fslbl.position = Vector2(280, base_y + 72)
+	fslbl.add_theme_font_size_override("font_size", 13)
+	fslbl.add_theme_color_override("font_color", Color(0.75, 0.75, 0.75))
+	parent.add_child(fslbl)
+	var fsbtn := CheckButton.new()
+	fsbtn.button_pressed = GameManager.fullscreen
+	fsbtn.position = Vector2(380, base_y + 68)
+	fsbtn.toggled.connect(func(v): GameManager.apply_fullscreen(v))
+	parent.add_child(fsbtn)
 
 func _on_restart_pressed() -> void:
 	GameManager.reset()
