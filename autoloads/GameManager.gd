@@ -174,9 +174,16 @@ func _save_high_score() -> void:
 		high_score = wave_number
 	var cfg := ConfigFile.new()
 	cfg.set_value("scores",   "best_wave",  high_score)
+	cfg.set_value("scores",   "best_score", max(score, _load_best_score()))
 	cfg.set_value("settings", "volume_db",  volume_db)
 	cfg.set_value("settings", "fullscreen", fullscreen)
 	cfg.save("user://save.cfg")
+
+func _load_best_score() -> int:
+	var cfg := ConfigFile.new()
+	if cfg.load("user://save.cfg") == OK:
+		return cfg.get_value("scores", "best_score", 0)
+	return 0
 
 func _load_high_score() -> void:
 	var cfg := ConfigFile.new()

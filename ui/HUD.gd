@@ -85,6 +85,9 @@ func _ready() -> void:
 	_build_start_screen()
 	_connect_gm_signals()
 	call_deferred("_connect_card_hand")
+	# Start quiet menu music
+	Audio.start_music()
+	Audio._music_player.volume_db = -28.0
 
 # ---------------------------------------------------------------------------
 # Layout
@@ -259,6 +262,12 @@ func _build_overlays() -> void:
 	var restart_btn := _btn("Play Again", Vector2(563, 412), Vector2(154, 52))
 	restart_btn.pressed.connect(_on_restart_pressed)
 	game_over_panel.add_child(restart_btn)
+	var r_hint := Label.new()
+	r_hint.text = "or press  R"
+	r_hint.position = Vector2(595, 472)
+	r_hint.add_theme_font_size_override("font_size", 13)
+	r_hint.add_theme_color_override("font_color", Color(0.45, 0.45, 0.45))
+	game_over_panel.add_child(r_hint)
 
 	# Victory panel
 	victory_panel = ColorRect.new()
@@ -438,9 +447,10 @@ func _build_start_screen() -> void:
 
 	if GameManager.high_score > 0:
 		var hs := Label.new()
-		hs.text = "Best: Wave %d / %d" % [GameManager.high_score, GameManager.WIN_WAVE]
-		hs.position = Vector2(548, 534)
-		hs.add_theme_font_size_override("font_size", 17)
+		var best_score := GameManager._load_best_score()
+		hs.text = "Best: Wave %d / %d   •   Score %d" % [GameManager.high_score, GameManager.WIN_WAVE, best_score]
+		hs.position = Vector2(440, 534)
+		hs.add_theme_font_size_override("font_size", 16)
 		hs.add_theme_color_override("font_color", Color(1.0, 0.82, 0.22))
 		start_screen.add_child(hs)
 
@@ -521,8 +531,13 @@ func _connect_card_hand() -> void:
 func _on_hand_updated(_hand: Array) -> void:
 	var ch := _ch()
 	if not ch: return
-	discard_count_label.text = "Discards: %d" % ch.discards_remaining
-	discard_btn.disabled = ch.discards_remaining <= 0 or ch.selected.is_empty()
+	var rem: int = ch.discards_remaining
+	discard_count_label.text = "Discards: %d" % rem
+	if rem == 0:
+		discard_count_label.add_theme_color_override("font_color", Color(0.85, 0.25, 0.25))
+	else:
+		discard_count_label.add_theme_color_override("font_color", Color.WHITE)
+	discard_btn.disabled = rem <= 0 or ch.selected.is_empty()
 	play_btn.disabled = ch.selected.size() != 5
 	var pr: int = ch.preview_rank()
 	if pr >= 0:
@@ -781,6 +796,10 @@ func _on_start_pressed() -> void:
 	var tw := create_tween()
 	tw.tween_property(start_screen, "modulate:a", 0.0, 0.35)
 	tw.tween_callback(func(): start_screen.visible = false)
+	# Fade music up to game volume
+	if is_instance_valid(Audio._music_player):
+		var vtw := create_tween()
+		vtw.tween_property(Audio._music_player, "volume_db", Audio.MUSIC_VOL, 0.5)
 	GameManager.game_started.emit()
 
 func _on_speed_toggle() -> void:

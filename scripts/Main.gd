@@ -37,7 +37,6 @@ func _ready() -> void:
 	card_hand.hand_evaluated.connect(_on_hand_evaluated_main)
 	card_hand.reset_for_wave()
 	await GameManager.game_started
-	Audio.start_music()
 	grid.rebuild_for_map(GameManager.selected_map)
 	wave_manager.init(grid.world_path)
 	await get_tree().create_timer(0.35).timeout
@@ -155,7 +154,11 @@ func _generate_wave_fallback(wave_num: int) -> Array:
 	return data
 
 func _input(event: InputEvent) -> void:
-	if GameManager.state == "over" or GameManager.state == "won": return
+	if GameManager.state == "over" or GameManager.state == "won":
+		if event is InputEventKey and event.pressed and event.keycode == KEY_R:
+			GameManager.reset()
+			get_tree().reload_current_scene()
+		return
 
 	# Keyboard shortcuts
 	if event is InputEventKey and event.pressed and not event.echo:

@@ -25,6 +25,7 @@ var hand_size: int = 8
 
 signal hand_updated(hand: Array)
 signal hand_evaluated(rank: int, cards: Array)
+signal deck_reshuffled()
 
 func _ready() -> void:
 	_new_deck()
@@ -47,6 +48,7 @@ func draw_to_full() -> void:
 	while hand.size() < hand_size:
 		if deck.is_empty():
 			_new_deck()
+			deck_reshuffled.emit()
 		hand.append(deck.pop_back())
 	hand_updated.emit(hand)
 

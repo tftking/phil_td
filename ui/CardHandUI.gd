@@ -80,6 +80,16 @@ func _connect_card_hand() -> void:
 	if ch:
 		ch.hand_updated.connect(_on_hand_updated)
 		ch.hand_evaluated.connect(_on_hand_evaluated)
+		ch.deck_reshuffled.connect(_on_deck_reshuffled)
+
+func _on_deck_reshuffled() -> void:
+	var deck_lbl: Label = get_node_or_null("DeckLabel")
+	if deck_lbl:
+		deck_lbl.text = "Deck: shuffled!"
+		deck_lbl.add_theme_color_override("font_color", Color(1.0, 0.82, 0.22))
+		# Reset color after 1.5s
+		await get_tree().create_timer(1.5).timeout
+		deck_lbl.add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
 
 func _on_hand_updated(hand: Array) -> void:
 	control.queue_redraw()

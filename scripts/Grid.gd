@@ -30,22 +30,24 @@ func rebuild_for_map(map_idx: int) -> void:
 	queue_redraw()
 	path_ready.emit(world_path)
 
+var _arrow_polys: Array = []   # cached arrow triangles
+
 func _build_path(map_idx: int) -> void:
 	var cells: Array[Vector2i] = []
 	match map_idx:
-		0: # Valley — S-curve
+		0:
 			for x in range(0, 5):    cells.append(Vector2i(x, 5))
 			for y in range(4, 0, -1): cells.append(Vector2i(4, y))
 			for x in range(5, 16):   cells.append(Vector2i(x, 1))
 			for y in range(2, 9):    cells.append(Vector2i(15, y))
 			for x in range(16, 20):  cells.append(Vector2i(x, 8))
-		1: # Gauntlet — double U
+		1:
 			for x in range(0, 18):      cells.append(Vector2i(x, 1))
 			for y in range(2, 6):        cells.append(Vector2i(17, y))
 			for x in range(16, 1, -1):   cells.append(Vector2i(x, 5))
 			for y in range(6, 9):        cells.append(Vector2i(2, y))
 			for x in range(3, 20):       cells.append(Vector2i(x, 8))
-		2: # Maze — four-turn winding
+		2:
 			for x in range(0, 7):        cells.append(Vector2i(x, 4))
 			for y in range(3, 0, -1):    cells.append(Vector2i(6, y))
 			for x in range(7, 14):       cells.append(Vector2i(x, 1))
@@ -55,9 +57,24 @@ func _build_path(map_idx: int) -> void:
 			for x in range(8, 20):       cells.append(Vector2i(x, 5))
 
 	path_cells = cells
+	path_set.clear()
+	world_path.clear()
+	_arrow_polys.clear()
 	for c in cells:
 		path_set[c] = true
 		world_path.append(cell_to_world(c))
+	# Pre-compute arrow triangles
+	for i in range(2, cells.size() - 1, 4):
+		var a  := cell_to_world(cells[i - 1])
+		var b  := cell_to_world(cells[i])
+		var dir  := (b - a).normalized()
+		var mid  := (a + b) * 0.5
+		var perp := Vector2(-dir.y, dir.x) * 7.0
+		_arrow_polys.append(PackedVector2Array([
+			mid + dir * 9.0,
+			mid - dir * 5.0 + perp,
+			mid - dir * 5.0 - perp
+		]))
 
 func _draw() -> void:
 	for x in COLS:
@@ -78,16 +95,8 @@ func _draw() -> void:
 				draw_rect(rect, Color(0.17, 0.36, 0.17))
 			draw_rect(rect, Color(0, 0, 0, 0.22), false, 1.0)
 
-	# Direction arrows every 4 path cells
-	for i in range(2, path_cells.size() - 1, 4):
-		var a := cell_to_world(path_cells[i - 1])
-		var b := cell_to_world(path_cells[i])
-		var dir  := (b - a).normalized()
-		var mid  := (a + b) * 0.5
-		var perp := Vector2(-dir.y, dir.x) * 7.0
-		draw_colored_polygon(
-			[mid + dir * 9.0, mid - dir * 5.0 + perp, mid - dir * 5.0 - perp],
-			Color(0.88, 0.78, 0.58, 0.65))
+	for poly in _arrow_polys:
+		draw_colored_polygon(poly, Color(0.88, 0.78, 0.58, 0.65))
 
 	if world_path.size() > 0:
 		_draw_portal(world_path[0],  Color(0.15, 0.95, 0.30))
