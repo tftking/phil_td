@@ -7,15 +7,17 @@ var splash_radius: float   = 0.0
 var proj_color: Color      = Color(1.0, 0.9, 0.2)
 var status_type: int       = 0
 var status_duration: float = 0.0
+var proj_shape: int        = 0  # 0=circle 1=diamond 2=line 3=star
 
 func init(t: Node2D, dmg: int, spd: float, splash: float,
-		  s_type: int = 0, s_dur: float = 0.0) -> void:
+		  s_type: int = 0, s_dur: float = 0.0, shape: int = 0) -> void:
 	target          = t
 	damage          = dmg
 	move_speed      = spd
 	splash_radius   = splash
 	status_type     = s_type
 	status_duration = s_dur
+	proj_shape      = shape
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(target):
@@ -52,5 +54,19 @@ func _on_hit() -> void:
 	queue_free()
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 5, proj_color)
-	draw_arc(Vector2.ZERO, 5, 0, TAU, 12, Color(0, 0, 0, 0.4), 1.0)
+	match proj_shape:
+		0:  # circle — Archer, Double, Sniper, Laser
+			draw_circle(Vector2.ZERO, 5, proj_color)
+			draw_arc(Vector2.ZERO, 5, 0, TAU, 12, Color(0, 0, 0, 0.4), 1.0)
+		1:  # diamond — Rapid, Storm
+			var pts := PackedVector2Array([Vector2(0,-7),Vector2(5,0),Vector2(0,7),Vector2(-5,0)])
+			draw_colored_polygon(pts, proj_color)
+		2:  # elongated capsule — Mortar (slow, big)
+			draw_circle(Vector2.ZERO, 8, proj_color)
+			draw_arc(Vector2.ZERO, 8, 0, TAU, 16, Color(0,0,0,0.5), 2.0)
+		3:  # star burst — Nuke
+			for i in 6:
+				var a := (TAU / 6.0) * i
+				draw_line(Vector2(cos(a), sin(a)) * 3, Vector2(cos(a), sin(a)) * 9,
+					proj_color, 2.0)
+			draw_circle(Vector2.ZERO, 4, proj_color)

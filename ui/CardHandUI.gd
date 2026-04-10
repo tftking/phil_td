@@ -24,6 +24,7 @@ var card_rects: Array = []
 
 func _ready() -> void:
 	layer = 5
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	font = ThemeDB.fallback_font
 
 	control = Control.new()

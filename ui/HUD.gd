@@ -76,6 +76,7 @@ var sel_diff:  int   = 1
 
 func _ready() -> void:
 	layer = 10
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_top_bar()
 	_build_boss_bar()
 	_build_right_panel()
@@ -137,7 +138,7 @@ func _build_right_panel() -> void:
 	enemy_count_label.add_theme_color_override("font_color", Color(0.62, 0.62, 0.62))
 	_sep(px, 116, 285)
 	_lbl("Tower info", Vector2(px, 126), 13).add_theme_color_override("font_color", Color(0.50, 0.50, 0.50))
-	_lbl("Hover tower  •  right-click sells", Vector2(px, 144), 11).add_theme_color_override("font_color", Color(0.36, 0.36, 0.36))
+	_lbl("Hover=inspect  Right-click=sell  Mid=target", Vector2(px, 144), 10).add_theme_color_override("font_color", Color(0.36, 0.36, 0.36))
 	tower_name_lbl   = _lbl("—",  Vector2(px, 163), 17)
 	tower_dmg_lbl    = _lbl("",   Vector2(px, 186), 12)
 	tower_rate_lbl   = _lbl("",   Vector2(px + 148, 186), 12)
@@ -147,19 +148,16 @@ func _build_right_panel() -> void:
 	for l in [tower_dmg_lbl, tower_rate_lbl, tower_range_lbl, tower_splash_lbl, tower_sell_lbl]:
 		l.add_theme_color_override("font_color", Color(0.68, 0.68, 0.68))
 	_sep(px, 240, 285)
-	_lbl("Hand → Tower", Vector2(px, 250), 13).add_theme_color_override("font_color", Color(0.50, 0.50, 0.50))
+	_lbl("Hand → Tower", Vector2(px, 250), 12).add_theme_color_override("font_color", Color(0.50, 0.50, 0.50))
 	for i in GUIDE.size():
 		var row: Array = GUIDE[i]
-		var gl := _lbl("%-16s %s" % [row[0], row[1]], Vector2(px, 268 + i * 19), 12)
+		var gl := _lbl("%-16s %s" % [row[0], row[1]], Vector2(px, 265 + i * 17), 11)
 		gl.add_theme_color_override("font_color", row[2].lightened(0.2))
 
-	# Status + enemy legend at bottom of panel
-	var sep2_y: float = 268.0 + GUIDE.size() * 19.0 + 6.0
+	var sep2_y: float = 265.0 + GUIDE.size() * 17.0 + 4.0
 	_sep(px, sep2_y, 285)
-	_lbl("Status effects", Vector2(px, sep2_y + 8), 11).add_theme_color_override("font_color", Color(0.45,0.45,0.45))
-	var slow_lbl := _lbl("  Slow  Poison", Vector2(px, sep2_y + 24), 11)
-	slow_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	_lbl("Flush suit bonus: ♥+rate  ♦+dmg  ♠+range  ♣+splash", Vector2(px, sep2_y + 40), 11).add_theme_color_override("font_color", Color(0.50,0.50,0.50))
+	_lbl("♥+rate  ♦+dmg  ♠+range  ♣+splash  (flush bonus)", Vector2(px, sep2_y + 8), 10).add_theme_color_override("font_color", Color(0.48,0.48,0.48))
+	_lbl("Blue tint=slow   Green tint=poison", Vector2(px, sep2_y + 22), 10).add_theme_color_override("font_color", Color(0.45,0.45,0.45))
 
 func _build_bottom_bar() -> void:
 	var bar := ColorRect.new()
@@ -172,7 +170,7 @@ func _build_bottom_bar() -> void:
 	placing_label = _lbl("", Vector2(30, 528), 15)
 	placing_label.add_theme_color_override("font_color", Color(0.22, 1.0, 0.38))
 	placing_label.visible = false
-	_lbl("Yellow = upgrade  •  Right-click tower to sell", Vector2(30, 556), 12).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
+	_lbl("Yellow = upgrade  •  Right-click=sell  •  Middle-click=cycle target", Vector2(30, 556), 12).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
 	discard_count_label = _lbl("Discards: 3", Vector2(1040, 492))
 	play_btn = _btn("Play Hand", Vector2(1055, 518), Vector2(155, 44))
 	play_btn.pressed.connect(_on_play_pressed)
@@ -500,7 +498,8 @@ func show_tower_info(tower: Node) -> void:
 	tower_name_lbl.text = tower.tower_label
 	tower_name_lbl.add_theme_color_override("font_color", tower.tower_color.lightened(0.3))
 	tower_dmg_lbl.text    = "DMG  %d  (%.0f DPS)" % [tower.damage, tower.dps()]
-	tower_rate_lbl.text   = "RATE  %.1f/s" % tower.fire_rate
+	tower_rate_lbl.text   = "RATE  %.1f/s  [%s]" % [tower.fire_rate,
+		tower.PRIORITY_LABELS[tower.targeting_priority]]
 	tower_range_lbl.text  = "RANGE  %d" % int(tower.range_radius)
 	var splash_txt := ("SPLASH  %d" % int(tower.splash_radius)) if tower.splash_radius > 0 else ""
 	var status_txt := ""

@@ -157,6 +157,11 @@ func _input(event: InputEvent) -> void:
 				tower_placer.cancel()
 			else:
 				_try_sell_tower(cell)
+		elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			var tower = grid.tower_slots.get(cell)
+			if tower != null and is_instance_valid(tower):
+				tower.cycle_priority()
+				hud.show_tower_info(tower)
 
 	if event is InputEventMouseMotion:
 		var mpos: Vector2  = get_global_mouse_position()
