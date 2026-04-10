@@ -52,6 +52,8 @@ var stat_hands_played:  int = 0
 var stat_gold_earned:   int = 0
 var stat_towers_placed: int = 0
 var stat_high_cards:    int = 0
+var perfect_streak:     int = 0   # consecutive waves with no leaks
+var _leaked_this_wave:  bool = false
 
 func _ready() -> void:
 	lives = DIFFICULTIES[difficulty].lives
@@ -95,6 +97,7 @@ func add_kill() -> void:
 
 func lose_life(amount: int = 1) -> void:
 	lives -= amount
+	_leaked_this_wave = true
 	lives_changed.emit(lives)
 	if lives <= 0:
 		state = "over"
@@ -104,11 +107,16 @@ func lose_life(amount: int = 1) -> void:
 func start_wave() -> void:
 	wave_number += 1
 	wave_kills   = 0
+	_leaked_this_wave = false
 	active_modifier = {}
 	state = "wave"
 	wave_started.emit(wave_number)
 
 func clear_wave() -> void:
+	if not _leaked_this_wave:
+		perfect_streak += 1
+	else:
+		perfect_streak = 0
 	state = "shop"
 	wave_cleared.emit(wave_number)
 	if wave_number >= WIN_WAVE:
@@ -152,6 +160,8 @@ func reset() -> void:
 	tower_count    = 0
 	active_modifier = {}
 	state          = "idle"
+	perfect_streak     = 0
+	_leaked_this_wave  = false
 	stat_hands_played  = 0
 	stat_gold_earned   = 0
 	stat_towers_placed = 0

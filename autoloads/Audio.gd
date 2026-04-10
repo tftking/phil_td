@@ -13,6 +13,7 @@ var _boss_player:    AudioStreamPlayer
 const SAMPLE_RATE: float = 22050.0
 
 func _ready() -> void:
+	process_mode    = Node.PROCESS_MODE_ALWAYS
 	_shoot_player  = _make_player()
 	_hit_player    = _make_player()
 	_clear_player  = _make_player()
@@ -43,6 +44,12 @@ func play_wave_clear() -> void:
 
 func play_sell() -> void:
 	_play_arpeggio(_sell_player, [784.0, 523.0], 0.08, 0.35)
+
+func play_invalid() -> void:
+	_play_tone(_hit_player, 180.0, 0.02, 0.12, 0.4)
+
+func play_enemy_leaked() -> void:
+	_play_arpeggio(_sell_player, [330.0, 220.0, 165.0], 0.07, 0.45)
 
 func play_place() -> void:
 	_play_arpeggio(_place_player, [440.0, 660.0], 0.07, 0.45)

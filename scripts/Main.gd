@@ -89,6 +89,12 @@ func _on_wave_cleared(wave_num: int) -> void:
 		var bonus := GameManager.lives * 3
 		GameManager.add_gold(bonus)
 		hud.show_income_popup(bonus, "life bonus")
+	# Perfect wave streak bonus
+	var streak := GameManager.perfect_streak
+	if streak >= 2:
+		var streak_bonus := streak * 15
+		GameManager.add_gold(streak_bonus)
+		hud.show_income_popup(streak_bonus, "%dx streak" % streak)
 	card_hand.reset_for_wave()
 	if GameManager.state != "over":
 		await hud.run_countdown(wave_num, GameManager.wave_kills)

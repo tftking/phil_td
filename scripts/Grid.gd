@@ -18,6 +18,7 @@ const SELL_FLASH_DUR: float    = 0.35
 signal path_ready(world_path: Array)
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	rebuild_for_map(GameManager.selected_map)
 
 func rebuild_for_map(map_idx: int) -> void:

@@ -80,6 +80,7 @@ func _on_enemy_done(_e: Node2D) -> void:
 	_check_done()
 
 func _on_enemy_at_base(_e: Node2D) -> void:
+	Audio.play_enemy_leaked()
 	GameManager.lose_life()
 	alive_count -= 1
 	progress_updated.emit(alive_count, total_count)

@@ -96,15 +96,15 @@ func _build_top_bar() -> void:
 	bar.size = Vector2(1280, 38)
 	add_child(bar)
 	lives_label  = _lbl("Lives: %d" % GameManager.lives, Vector2(12, 9))
-	gold_label   = _lbl("Gold: 100",  Vector2(165, 9))
-	wave_label   = _lbl("Wave: 0",    Vector2(318, 9))
-	kills_label  = _lbl("Kills: 0",   Vector2(468, 9))
-	var tl := _lbl("Towers: 0", Vector2(590, 9))
+	gold_label   = _lbl("Gold: 100",  Vector2(148, 9))
+	wave_label   = _lbl("Wave: 0",    Vector2(282, 9))
+	kills_label  = _lbl("Kills: 0",   Vector2(404, 9))
+	var tl := _lbl("Towers: 0", Vector2(504, 9))
 	tl.name = "TowersLabel"
-	var sl := _lbl("Score: 0", Vector2(718, 9))
+	var sl := _lbl("Score: 0", Vector2(620, 9))
 	sl.name = "ScoreLabel"
 	sl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))
-	status_label = _lbl("", Vector2(860, 9))
+	status_label = _lbl("", Vector2(760, 9))
 	status_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
 	speed_btn = _btn("2x", Vector2(900, 3), Vector2(54, 30))
 	speed_btn.pressed.connect(_on_speed_toggle)
@@ -150,7 +150,7 @@ func _build_right_panel() -> void:
 	tower_range_lbl  = _lbl("",   Vector2(px, 203), 12)
 	tower_splash_lbl = _lbl("",   Vector2(px + 148, 203), 12)
 	tower_sell_lbl   = _lbl("",   Vector2(px, 220), 12)
-	var preview_hint := _lbl("", Vector2(px, 220), 11)
+	var preview_hint := _lbl("", Vector2(px, 236), 11)
 	preview_hint.name = "PlacementHint"
 	preview_hint.add_theme_color_override("font_color", Color(0.55, 0.82, 0.55))
 	for l in [tower_dmg_lbl, tower_rate_lbl, tower_range_lbl, tower_splash_lbl, tower_sell_lbl]:
@@ -578,7 +578,9 @@ func run_countdown(wave_num: int = 0, wave_kills_count: int = 0) -> void:
 	countdown_label.visible = true
 	countdown_label.add_theme_font_size_override("font_size", 22)
 	if wave_num > 0:
-		countdown_label.text = "Wave %d cleared!   %d kills" % [wave_num, wave_kills_count]
+		var streak := GameManager.perfect_streak
+		var streak_txt := ("  •  %dx perfect streak!" % streak) if streak >= 2 else ""
+		countdown_label.text = "Wave %d cleared!   %d kills%s" % [wave_num, wave_kills_count, streak_txt]
 		await get_tree().create_timer(1.2).timeout
 	# Show upcoming wave info
 	var wm := get_node_or_null("/root/Main/WaveManager")
@@ -664,10 +666,10 @@ func _on_run_over() -> void:
 			GameManager.DIFFICULTIES[GameManager.difficulty].name]
 	var stats2: Label = game_over_panel.get_node_or_null("Stats2Label")
 	if stats2:
-		stats2.text = "Score: %d   •   %d hands   •   %d gold earned   •   %d towers   •   %d high cards" % [
+		stats2.text = "Score: %d   •   %d hands   •   %d gold earned   •   %d towers   •   best streak: %d" % [
 			GameManager.score, GameManager.stat_hands_played,
 			GameManager.stat_gold_earned, GameManager.stat_towers_placed,
-			GameManager.stat_high_cards]
+			GameManager.perfect_streak]
 	var hs_lbl: Label = game_over_panel.get_node_or_null("HighScoreLabel")
 	if hs_lbl:
 		if GameManager.wave_number >= GameManager.high_score and GameManager.high_score > 0:

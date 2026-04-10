@@ -31,9 +31,9 @@ func dps() -> float:
 	return damage * fire_rate
 
 func _ready() -> void:
-	fire_interval    = 1.0 / max(fire_rate, 0.01)
-	
-	z_index          = 3
+	fire_interval = 1.0 / max(fire_rate, 0.01)
+	_scan_frames  = randi() % 6
+	z_index       = 3
 	queue_redraw()
 
 func set_highlighted(v: bool) -> void:

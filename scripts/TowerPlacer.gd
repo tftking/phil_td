@@ -68,14 +68,18 @@ func _on_hand_evaluated(rank: int, cards: Array) -> void:
 func try_place(cell: Vector2i) -> void:
 	if not is_placing or pending_rank <= 0: return
 	if not grid.is_valid_cell(cell): return
-	if grid.is_path_cell(cell): return
+	if grid.is_path_cell(cell):
+		Audio.play_invalid()
+		return
 
 	var existing = grid.tower_slots.get(cell)
 	var upgrading: bool = existing != null and is_instance_valid(existing)
 
 	var old_priority: int = 0
 	if upgrading:
-		if pending_rank <= existing.hand_rank: return
+		if pending_rank <= existing.hand_rank:
+			Audio.play_invalid()
+			return
 		old_priority = existing.targeting_priority
 		GameManager.add_gold(existing.sell_value / 2)
 		GameManager.remove_tower()
