@@ -13,6 +13,14 @@ var world_path: Array = []
 var path_index: int   = 1
 var is_boss: bool     = false
 
+# Status effects
+var _slow_timer: float   = 0.0
+var _poison_timer: float = 0.0
+var _poison_tick: float  = 0.0
+const POISON_DPS: float  = 6.0
+const POISON_TICK: float = 0.4
+const SLOW_MULT: float   = 0.45
+
 var _flash_timer: float  = 0.0
 const FLASH_DUR: float   = 0.10
 
@@ -35,12 +43,33 @@ func _process(delta: float) -> void:
 		reached_base.emit(self)
 		queue_free()
 		return
-	_move_step(delta)
+	# Status timers
+	if _slow_timer > 0.0:
+		_slow_timer -= delta
+	if _poison_timer > 0.0:
+		_poison_timer -= delta
+		_poison_tick  -= delta
+		if _poison_tick <= 0.0:
+			_poison_tick = POISON_TICK
+			health = max(0, health - int(POISON_DPS * POISON_TICK))
+			if is_boss: GameManager.report_boss_health(health, max_health)
+			if health <= 0:
+				_die()
+				return
+	var spd_mult: float = SLOW_MULT if _slow_timer > 0.0 else 1.0
+	_move_step(delta * spd_mult)
 	if _flash_timer > 0.0:
 		_flash_timer -= delta
 		if _flash_timer <= 0.0:
 			modulate = Color.WHITE
 	queue_redraw()
+
+func apply_status(s_type: int, duration: float) -> void:
+	match s_type:
+		1: _slow_timer   = max(_slow_timer, duration)
+		2:
+			_poison_timer = max(_poison_timer, duration)
+			if _poison_tick <= 0.0: _poison_tick = POISON_TICK
 
 func _move_step(delta: float) -> void:
 	var target: Vector2 = world_path[path_index]
@@ -108,6 +137,10 @@ func _draw() -> void:
 func _draw_circle_enemy(r: float) -> void:
 	draw_circle(Vector2.ZERO, r, enemy_color)
 	draw_arc(Vector2.ZERO, r, 0, TAU, 20, Color(0, 0, 0, 0.5), 1.5)
+	if _slow_timer > 0.0:
+		draw_circle(Vector2.ZERO, r, Color(0.3, 0.6, 1.0, 0.35))
+	elif _poison_timer > 0.0:
+		draw_circle(Vector2.ZERO, r, Color(0.1, 0.85, 0.1, 0.35))
 
 func _draw_triangle_enemy(r: float) -> void:
 	# Pointy triangle pointing in direction of travel

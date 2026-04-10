@@ -1,31 +1,37 @@
 extends Node2D
 
-var tower_label: String = "Tower"
-var damage: int         = 10
-var fire_rate: float    = 1.0
-var range_radius: float = 120.0
-var tower_color: Color  = Color(0.35, 0.60, 0.95)
-var splash_radius: float = 0.0
+var tower_label: String    = "Tower"
+var damage: int            = 10
+var fire_rate: float       = 1.0
+var range_radius: float    = 120.0
+var tower_color: Color     = Color(0.35, 0.60, 0.95)
+var splash_radius: float   = 0.0
 var projectile_speed: float = 220.0
-var sell_value: int     = 20
-var hand_rank: int      = 0
-var is_highlighted: bool = false
+var sell_value: int        = 20
+var hand_rank: int         = 0
+var status_type: int       = 0   # 0=none 1=slow 2=poison
+var status_duration: float = 0.0
+var suit_bonus_label: String = ""
+var is_highlighted: bool   = false
+
+var target: Node2D         = null
+var fire_timer: float      = 0.0
+var fire_interval: float   = 1.0
+var aim_angle: float       = -PI * 0.5
+var projectile_scene: PackedScene = null
+
+func dps() -> float:
+	return damage * fire_rate
+
+func _ready() -> void:
+	fire_interval   = 1.0 / max(fire_rate, 0.01)
+	projectile_scene = load("res://scenes/Projectile.tscn")
+	queue_redraw()
 
 func set_highlighted(v: bool) -> void:
 	if is_highlighted != v:
 		is_highlighted = v
 		queue_redraw()
-
-var target: Node2D = null
-var fire_timer: float = 0.0
-var fire_interval: float = 1.0
-var aim_angle: float = -PI * 0.5
-var projectile_scene: PackedScene = null
-
-func _ready() -> void:
-	fire_interval = 1.0 / max(fire_rate, 0.01)
-	projectile_scene = load("res://scenes/Projectile.tscn")
-	queue_redraw()
 
 func _process(delta: float) -> void:
 	fire_timer += delta
@@ -60,8 +66,8 @@ func _fire() -> void:
 	var proj = projectile_scene.instantiate()
 	get_tree().current_scene.add_child(proj)
 	proj.global_position = global_position
-	proj.proj_color = tower_color.lightened(0.3)
-	proj.init(target, damage, projectile_speed, splash_radius)
+	proj.proj_color      = tower_color.lightened(0.3)
+	proj.init(target, damage, projectile_speed, splash_radius, status_type, status_duration)
 
 func _draw() -> void:
 	var ring_alpha: float = 0.45 if is_highlighted else 0.12
@@ -71,15 +77,17 @@ func _draw() -> void:
 	if is_highlighted:
 		draw_circle(Vector2.ZERO, range_radius,
 			Color(tower_color.r, tower_color.g, tower_color.b, 0.06))
-	# Base
 	draw_circle(Vector2.ZERO, 16, tower_color)
 	draw_arc(Vector2.ZERO, 16, 0, TAU, 24, Color(0, 0, 0, 0.5), 2.0)
-	# Barrel
 	var tip: Vector2 = Vector2(cos(aim_angle), sin(aim_angle)) * 22.0
 	draw_line(Vector2.ZERO, tip, Color(0.08, 0.08, 0.08), 5.0, true)
 	draw_line(Vector2.ZERO, tip * 0.85, tower_color.lightened(0.25), 3.0, true)
-	# Name label below tower
-	var f := ThemeDB.fallback_font
-	var sw := f.get_string_size(tower_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+	# Status indicator dot
+	if status_type == 1:
+		draw_circle(Vector2(12, -12), 4, Color(0.3, 0.6, 1.0, 0.9))
+	elif status_type == 2:
+		draw_circle(Vector2(12, -12), 4, Color(0.2, 0.85, 0.2, 0.9))
+	var f   := ThemeDB.fallback_font
+	var sw  := f.get_string_size(tower_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
 	draw_string(f, Vector2(-sw * 0.5, 30), tower_label,
 		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1, 1, 1, 0.85))

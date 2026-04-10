@@ -153,6 +153,14 @@ func _build_right_panel() -> void:
 		var gl := _lbl("%-16s %s" % [row[0], row[1]], Vector2(px, 268 + i * 19), 12)
 		gl.add_theme_color_override("font_color", row[2].lightened(0.2))
 
+	# Status + enemy legend at bottom of panel
+	var sep2_y: float = 268.0 + GUIDE.size() * 19.0 + 6.0
+	_sep(px, sep2_y, 285)
+	_lbl("Status effects", Vector2(px, sep2_y + 8), 11).add_theme_color_override("font_color", Color(0.45,0.45,0.45))
+	var slow_lbl := _lbl("  Slow  Poison", Vector2(px, sep2_y + 24), 11)
+	slow_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	_lbl("Flush suit bonus: ♥+rate  ♦+dmg  ♠+range  ♣+splash", Vector2(px, sep2_y + 40), 11).add_theme_color_override("font_color", Color(0.50,0.50,0.50))
+
 func _build_bottom_bar() -> void:
 	var bar := ColorRect.new()
 	bar.color = Color(0.04, 0.04, 0.04, 0.84)
@@ -450,8 +458,9 @@ func _on_hand_updated(_hand: Array) -> void:
 func _on_hand_evaluated(rank: int, _cards: Array) -> void:
 	status_label.text = "" if rank > 0 else "High card — no placement"
 
-func _on_placement_started(tower_lbl: String) -> void:
-	placing_label.text = "Placing: %s   (ESC / right-click to cancel)" % tower_lbl
+func _on_placement_started(tower_lbl: String, suit_bonus: String) -> void:
+	var bonus_txt := ("  [%s]" % suit_bonus) if suit_bonus != "" else ""
+	placing_label.text = "Placing: %s%s   (ESC / right-click to cancel)" % [tower_lbl, bonus_txt]
 	placing_label.visible = true
 
 func hide_placing_label() -> void:
@@ -490,11 +499,19 @@ func run_countdown(wave_num: int = 0, wave_kills_count: int = 0) -> void:
 func show_tower_info(tower: Node) -> void:
 	tower_name_lbl.text = tower.tower_label
 	tower_name_lbl.add_theme_color_override("font_color", tower.tower_color.lightened(0.3))
-	tower_dmg_lbl.text    = "DMG  %d" % tower.damage
+	tower_dmg_lbl.text    = "DMG  %d  (%.0f DPS)" % [tower.damage, tower.dps()]
 	tower_rate_lbl.text   = "RATE  %.1f/s" % tower.fire_rate
 	tower_range_lbl.text  = "RANGE  %d" % int(tower.range_radius)
-	tower_splash_lbl.text = ("SPLASH  %d" % int(tower.splash_radius)) if tower.splash_radius > 0 else ""
-	tower_sell_lbl.text   = "Sell: +%d gold" % tower.sell_value
+	var splash_txt := ("SPLASH  %d" % int(tower.splash_radius)) if tower.splash_radius > 0 else ""
+	var status_txt := ""
+	match tower.status_type:
+		1: status_txt = "  SLOW"
+		2: status_txt = "  POISON"
+	tower_splash_lbl.text = splash_txt + status_txt
+	var sell_txt := "Sell: +%d gold" % tower.sell_value
+	if tower.suit_bonus_label != "":
+		sell_txt += "  [%s]" % tower.suit_bonus_label
+	tower_sell_lbl.text = sell_txt
 
 func clear_tower_info() -> void:
 	tower_name_lbl.text = "—"
