@@ -195,6 +195,7 @@ func _try_sell_tower(cell: Vector2i) -> void:
 	Audio.play_sell()
 	GameManager.add_gold(tower.sell_value)
 	grid.remove_tower(cell)
+	grid.flash_sell(cell)
 	tower.queue_free()
 	hud.show_sell_feedback(tower.sell_value)
 	hud.clear_tower_info()

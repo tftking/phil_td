@@ -410,7 +410,8 @@ func _update_selection_visuals() -> void:
 func _connect_gm_signals() -> void:
 	GameManager.gold_changed.connect(func(v): gold_label.text = "Gold: %d" % v)
 	GameManager.lives_changed.connect(func(v): lives_label.text = "Lives: %d" % v)
-	GameManager.wave_started.connect(func(w): wave_label.text = "Wave: %d" % w)
+	GameManager.wave_started.connect(func(w):
+		wave_label.text = "Wave: %d/%d" % [w, GameManager.WIN_WAVE])
 	GameManager.kill_registered.connect(func(): kills_label.text = "Kills: %d" % GameManager.kills)
 	GameManager.run_over.connect(_on_run_over)
 	GameManager.run_won.connect(func(): show_victory_screen())
@@ -482,9 +483,29 @@ func show_wave_announcement(wave_num: int) -> void:
 
 func run_countdown(wave_num: int = 0, wave_kills_count: int = 0) -> void:
 	countdown_label.visible = true
+	countdown_label.add_theme_font_size_override("font_size", 22)
 	if wave_num > 0:
-		countdown_label.text = "Wave %d cleared!   +%d kills" % [wave_num, wave_kills_count]
-		await get_tree().create_timer(1.4).timeout
+		countdown_label.text = "Wave %d cleared!   %d kills" % [wave_num, wave_kills_count]
+		await get_tree().create_timer(1.2).timeout
+	# Show upcoming wave info
+	var wm := get_node_or_null("/root/Main/WaveManager")
+	if wm:
+		var next_num := GameManager.wave_number + 1
+		if next_num <= GameManager.WIN_WAVE:
+			# Generate a preview of the next wave
+			var main := get_node_or_null("/root/Main")
+			if main and main.has_method("_generate_wave_fallback"):
+				var preview := main._generate_wave_fallback(next_num)
+				var summary := wm.get_wave_summary(preview)
+				var parts: Array = []
+				if summary.normal  > 0: parts.append("%d normal" % summary.normal)
+				if summary.runner  > 0: parts.append("%d runner" % summary.runner)
+				if summary.armored > 0: parts.append("%d armored" % summary.armored)
+				if summary.boss    > 0: parts.append("BOSS")
+				countdown_label.text = "Next: Wave %d   %s" % [next_num, "  •  ".join(parts)]
+				await get_tree().create_timer(1.0).timeout
+	# Countdown
+	countdown_label.add_theme_font_size_override("font_size", 72)
 	for i in range(3, 0, -1):
 		countdown_label.text = str(i)
 		await get_tree().create_timer(0.72).timeout
@@ -543,15 +564,22 @@ func _on_run_over() -> void:
 	speed_val = 1.0
 	speed_btn.text = "2x"
 	var stats: Label = game_over_panel.get_node_or_null("StatsLabel")
-	if stats: stats.text = "Wave %d  •  %d kills  •  %s" % [
-		GameManager.wave_number, GameManager.kills,
-		GameManager.DIFFICULTIES[GameManager.difficulty].name]
+	if stats:
+		stats.text = "Wave %d / %d   •   %d kills   •   %s" % [
+			GameManager.wave_number, GameManager.WIN_WAVE,
+			GameManager.kills,
+			GameManager.DIFFICULTIES[GameManager.difficulty].name]
 	var hs_lbl: Label = game_over_panel.get_node_or_null("HighScoreLabel")
 	if hs_lbl:
-		hs_lbl.text = ("New best!" if GameManager.wave_number >= GameManager.high_score
-			else "Best: Wave %d" % GameManager.high_score)
+		if GameManager.wave_number >= GameManager.high_score and GameManager.high_score > 0:
+			hs_lbl.text = "New best wave!"
+			hs_lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
+		elif GameManager.high_score > 0:
+			hs_lbl.text = "Best: Wave %d" % GameManager.high_score
+		else:
+			hs_lbl.text = ""
 	game_over_panel.visible = true
-	play_btn.disabled = true
+	play_btn.disabled    = true
 	discard_btn.disabled = true
 
 func show_pause_screen(show: bool) -> void:

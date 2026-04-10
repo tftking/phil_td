@@ -2,15 +2,25 @@ extends Node
 
 @export var enemy_scene: PackedScene
 
-var world_path: Array = []
+var world_path: Array  = []
 var spawn_queue: Array = []
-var alive_count: int = 0
-var total_count: int = 0
-var is_spawning: bool = false
+var alive_count: int   = 0
+var total_count: int   = 0
+var is_spawning: bool  = false
 var spawn_timer: Timer
+var last_wave_data: Array = []   # stored so HUD can preview
 
 signal all_dead()
 signal progress_updated(remaining: int, total: int)
+
+func get_wave_summary(wave_data: Array) -> Dictionary:
+	var counts := {normal=0, runner=0, armored=0, boss=0}
+	for e in wave_data:
+		if   e.get("is_boss", false):  counts.boss    += 1
+		elif e.get("enemy_type", 0) == 1: counts.runner  += 1
+		elif e.get("enemy_type", 0) == 2: counts.armored += 1
+		else: counts.normal += 1
+	return counts
 
 func _ready() -> void:
 	spawn_timer = Timer.new()
@@ -25,10 +35,11 @@ func start_wave(wave_data: Array) -> void:
 	if enemy_scene == null:
 		push_error("WaveManager: enemy_scene not assigned in inspector")
 		return
-	spawn_queue = wave_data.duplicate()
-	alive_count = wave_data.size()
-	total_count = alive_count
-	is_spawning = true
+	last_wave_data = wave_data
+	spawn_queue  = wave_data.duplicate()
+	alive_count  = wave_data.size()
+	total_count  = alive_count
+	is_spawning  = true
 	progress_updated.emit(alive_count, total_count)
 	_spawn_next()
 

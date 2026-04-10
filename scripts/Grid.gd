@@ -11,6 +11,9 @@ var tower_slots: Dictionary     = {}
 
 var hover_cell: Vector2i    = Vector2i(-1, -1)
 var placement_mode: bool    = false
+var _sell_flash_cell: Vector2i = Vector2i(-1, -1)
+var _sell_flash_timer: float   = 0.0
+const SELL_FLASH_DUR: float    = 0.35
 
 signal path_ready(world_path: Array)
 
@@ -91,7 +94,22 @@ func _draw() -> void:
 		draw_circle(world_path[-1], 10, Color(0.88, 0.18, 0.18))
 		draw_arc(world_path[-1],    10, 0, TAU, 16, Color(0, 0, 0, 0.4), 1.5)
 
-func set_hover(cell: Vector2i) -> void:
+	# Sell flash
+	if _sell_flash_timer > 0.0:
+		var t := _sell_flash_timer / SELL_FLASH_DUR
+		var fc := Rect2(_sell_flash_cell.x * CELL_SIZE, _sell_flash_cell.y * CELL_SIZE,
+			CELL_SIZE, CELL_SIZE)
+		draw_rect(fc, Color(0.25, 1.0, 0.4, t * 0.55))
+
+func _process(delta: float) -> void:
+	if _sell_flash_timer > 0.0:
+		_sell_flash_timer -= delta
+		queue_redraw()
+
+func flash_sell(cell: Vector2i) -> void:
+	_sell_flash_cell  = cell
+	_sell_flash_timer = SELL_FLASH_DUR
+	queue_redraw()
 	if hover_cell != cell:
 		hover_cell = cell
 		queue_redraw()
