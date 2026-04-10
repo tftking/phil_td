@@ -7,7 +7,8 @@ extends Node
 # Set your API key via Project > Project Settings > Globals or export var below.
 # ---------------------------------------------------------------------------
 
-@export var api_key: String = ""   # set in project.godot or override here
+@export var api_key: String = ""
+var use_gemini: bool = false  # toggled from start screen
 
 const API_URL: String = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
@@ -27,14 +28,14 @@ func _ready() -> void:
 	_http.request_completed.connect(_on_request_completed)
 
 func generate(wave_num: int, fallback_fn: Callable) -> void:
-	_wave_num        = wave_num
+	_wave_num          = wave_num
 	_fallback_callback = fallback_fn
-	var d            = GameManager.diff()
-	_diff_hp         = d.hp
-	_diff_spd        = d.spd
-	_diff_rew        = d.reward
+	var d              = GameManager.diff()
+	_diff_hp           = d.hp
+	_diff_spd          = d.spd
+	_diff_rew          = d.reward
 
-	if api_key.is_empty():
+	if not use_gemini or api_key.is_empty():
 		_emit_fallback()
 		return
 

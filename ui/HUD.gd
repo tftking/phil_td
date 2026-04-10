@@ -319,21 +319,14 @@ func _build_start_screen() -> void:
 	start_btn.pressed.connect(_on_start_pressed)
 	start_screen.add_child(start_btn)
 
-	# Gemini API key field
-	var gkey_lbl := Label.new()
-	gkey_lbl.text = "Gemini API key (optional — enables AI wave generation)"
-	gkey_lbl.position = Vector2(272, 540)
-	gkey_lbl.add_theme_font_size_override("font_size", 12)
-	gkey_lbl.add_theme_color_override("font_color", Color(0.42, 0.42, 0.42))
-	start_screen.add_child(gkey_lbl)
-	var gkey_edit := LineEdit.new()
-	gkey_edit.placeholder_text = "AIza..."
-	gkey_edit.position = Vector2(272, 560)
-	gkey_edit.size = Vector2(448, 36)
-	gkey_edit.secret = true
-	gkey_edit.text = GeminiWave.api_key
-	gkey_edit.text_changed.connect(func(v: String): GeminiWave.api_key = v)
-	start_screen.add_child(gkey_edit)
+	# Gemini opt-in (hidden unless api_key is set in GeminiWave)
+	if not GeminiWave.api_key.is_empty():
+		var gemini_btn := CheckButton.new()
+		gemini_btn.text = "AI wave generation (Gemini)"
+		gemini_btn.position = Vector2(272, 540)
+		gemini_btn.button_pressed = GeminiWave.use_gemini
+		gemini_btn.toggled.connect(func(v: bool): GeminiWave.use_gemini = v)
+		start_screen.add_child(gemini_btn)
 
 	_update_selection_visuals()
 
