@@ -5,10 +5,12 @@ extends Node
 var world_path: Array = []
 var spawn_queue: Array = []
 var alive_count: int = 0
+var total_count: int = 0
 var is_spawning: bool = false
 var spawn_timer: Timer
 
 signal all_dead()
+signal progress_updated(remaining: int, total: int)
 
 func _ready() -> void:
 	spawn_timer = Timer.new()
@@ -25,7 +27,9 @@ func start_wave(wave_data: Array) -> void:
 		return
 	spawn_queue = wave_data.duplicate()
 	alive_count = wave_data.size()
+	total_count = alive_count
 	is_spawning = true
+	progress_updated.emit(alive_count, total_count)
 	_spawn_next()
 
 func _spawn_next() -> void:
@@ -54,11 +58,13 @@ func _do_spawn(entry: Dictionary) -> void:
 
 func _on_enemy_done(_e: Node2D) -> void:
 	alive_count -= 1
+	progress_updated.emit(alive_count, total_count)
 	_check_done()
 
 func _on_enemy_at_base(_e: Node2D) -> void:
 	GameManager.lose_life()
 	alive_count -= 1
+	progress_updated.emit(alive_count, total_count)
 	_check_done()
 
 func _check_done() -> void:

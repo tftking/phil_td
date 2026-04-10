@@ -65,3 +65,8 @@ func _draw() -> void:
 	var tip: Vector2 = Vector2(cos(aim_angle), sin(aim_angle)) * 22.0
 	draw_line(Vector2.ZERO, tip, Color(0.08, 0.08, 0.08), 5.0, true)
 	draw_line(Vector2.ZERO, tip * 0.85, tower_color.lightened(0.25), 3.0, true)
+	# Name label below tower
+	var f := ThemeDB.fallback_font
+	var sw := f.get_string_size(tower_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+	draw_string(f, Vector2(-sw * 0.5, 30), tower_label,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(1, 1, 1, 0.85))

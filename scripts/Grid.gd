@@ -52,12 +52,25 @@ func _draw() -> void:
 				draw_rect(rect, Color(0.17, 0.36, 0.17))
 			draw_rect(rect, Color(0, 0, 0, 0.22), false, 1.0)
 
-	# Spawn dot
+	# Direction arrows every 4 path cells
+	for i in range(2, path_cells.size() - 1, 4):
+		var a := cell_to_world(path_cells[i - 1])
+		var b := cell_to_world(path_cells[i])
+		var dir  := (b - a).normalized()
+		var mid  := (a + b) * 0.5
+		var perp := Vector2(-dir.y, dir.x) * 7.0
+		draw_colored_polygon(
+			[mid + dir * 9.0, mid - dir * 5.0 + perp, mid - dir * 5.0 - perp],
+			Color(0.88, 0.78, 0.58, 0.65))
+
+	# Spawn label
 	if world_path.size() > 0:
-		draw_circle(world_path[0], 9, Color(0.2, 0.9, 0.3))
-	# Base dot
+		draw_circle(world_path[0], 10, Color(0.15, 0.82, 0.25))
+		draw_arc(world_path[0], 10, 0, TAU, 16, Color(0, 0, 0, 0.4), 1.5)
+	# Base label
 	if world_path.size() > 0:
-		draw_circle(world_path[-1], 9, Color(0.9, 0.2, 0.2))
+		draw_circle(world_path[-1], 10, Color(0.88, 0.18, 0.18))
+		draw_arc(world_path[-1], 10, 0, TAU, 16, Color(0, 0, 0, 0.4), 1.5)
 
 func set_hover(cell: Vector2i) -> void:
 	if hover_cell != cell:
