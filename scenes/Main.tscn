@@ -1,0 +1,32 @@
+[gd_scene load_steps=9 format=3 uid="uid://main001"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/Grid.gd" id="2_grid"]
+[ext_resource type="Script" path="res://scripts/WaveManager.gd" id="3_wave"]
+[ext_resource type="PackedScene" path="res://scenes/Enemy.tscn" id="4_enemy"]
+[ext_resource type="Script" path="res://scripts/CardHand.gd" id="5_card"]
+[ext_resource type="Script" path="res://scripts/TowerPlacer.gd" id="6_placer"]
+[ext_resource type="Script" path="res://ui/HUD.gd" id="7_hud"]
+[ext_resource type="Script" path="res://ui/CardHandUI.gd" id="8_handui"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Grid" type="Node2D" parent="."]
+script = ExtResource("2_grid")
+
+[node name="WaveManager" type="Node" parent="."]
+script = ExtResource("3_wave")
+enemy_scene = ExtResource("4_enemy")
+
+[node name="CardHand" type="Node" parent="."]
+script = ExtResource("5_card")
+
+[node name="TowerPlacer" type="Node" parent="."]
+script = ExtResource("6_placer")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("7_hud")
+
+[node name="CardHandUI" type="CanvasLayer" parent="."]
+script = ExtResource("8_handui")
