@@ -13,8 +13,6 @@ signal game_started()
 signal modifier_rolled(modifier: Dictionary)
 signal tower_count_changed(count: int)
 
-var tower_count: int = 0
-
 const WIN_WAVE: int = 30
 
 const DIFFICULTIES: Array = [
@@ -24,12 +22,12 @@ const DIFFICULTIES: Array = [
 ]
 
 const MODIFIERS: Array = [
-	{id="swarm",    label="Swarm!",        desc="+50% more enemies",       color=Color(0.9,0.5,0.1)},
-	{id="fast",     label="Speed surge",   desc="All enemies +40% faster", color=Color(0.3,0.9,0.9)},
-	{id="armored",  label="Armored wave",  desc="+60% enemy HP",           color=Color(0.5,0.5,0.9)},
-	{id="goldless", label="Dry spell",     desc="Enemies drop no gold",    color=Color(0.8,0.2,0.2)},
-	{id="none",     label="Clear skies",   desc="Standard wave",           color=Color(0.4,0.8,0.4)},
-	{id="none",     label="Clear skies",   desc="Standard wave",           color=Color(0.4,0.8,0.4)},
+	{id="swarm",    label="Swarm!",       desc="+50% more enemies",       color=Color(0.9,0.5,0.1)},
+	{id="fast",     label="Speed surge",  desc="All enemies +40% faster", color=Color(0.3,0.9,0.9)},
+	{id="armored",  label="Armored wave", desc="+60% enemy HP",           color=Color(0.5,0.5,0.9)},
+	{id="goldless", label="Dry spell",    desc="Enemies drop no gold",    color=Color(0.8,0.2,0.2)},
+	{id="none",     label="Clear skies",  desc="Standard wave",           color=Color(0.4,0.8,0.4)},
+	{id="none",     label="Clear skies",  desc="Standard wave",           color=Color(0.4,0.8,0.4)},
 ]
 
 var gold: int          = 100
@@ -44,6 +42,13 @@ var difficulty: int    = 1
 var active_modifier: Dictionary = {}
 var volume_db: float   = 0.0
 var fullscreen: bool   = false
+var tower_count: int   = 0
+
+# Run stats
+var stat_hands_played:  int = 0
+var stat_gold_earned:   int = 0
+var stat_towers_placed: int = 0
+var stat_high_cards:    int = 0
 
 func _ready() -> void:
 	lives = DIFFICULTIES[difficulty].lives
@@ -58,16 +63,16 @@ func roll_modifier() -> Dictionary:
 	return active_modifier
 
 func apply_high_card_penalty() -> void:
-	# Playing a high card costs 5 gold — if broke, lose a life
+	stat_high_cards += 1
 	if gold >= 5:
 		spend_gold(5)
 	else:
 		lose_life()
 
 func add_gold(amount: int) -> void:
-	# Goldless modifier suppresses enemy rewards
-	# (amount 0 still emits so UI stays in sync)
 	gold += amount
+	if amount > 0:
+		stat_gold_earned += amount
 	gold_changed.emit(gold)
 
 func spend_gold(amount: int) -> bool:
@@ -111,22 +116,15 @@ func report_boss_cleared() -> void:
 
 func add_tower() -> void:
 	tower_count += 1
+	stat_towers_placed += 1
 	tower_count_changed.emit(tower_count)
 
 func remove_tower() -> void:
 	tower_count = max(0, tower_count - 1)
 	tower_count_changed.emit(tower_count)
 
-func reset() -> void:
-	gold           = 100
-	lives          = DIFFICULTIES[difficulty].lives
-	wave_number    = 0
-	kills          = 0
-	wave_kills     = 0
-	tower_count    = 0
-	active_modifier = {}
-	state          = "idle"
-	Engine.time_scale = 1.0
+func record_hand_played() -> void:
+	stat_hands_played += 1
 
 func apply_volume(db: float) -> void:
 	volume_db = db
@@ -138,13 +136,28 @@ func apply_fullscreen(on: bool) -> void:
 		DisplayServer.WINDOW_MODE_FULLSCREEN if on
 		else DisplayServer.WINDOW_MODE_WINDOWED)
 
+func reset() -> void:
+	gold           = 100
+	lives          = DIFFICULTIES[difficulty].lives
+	wave_number    = 0
+	kills          = 0
+	wave_kills     = 0
+	tower_count    = 0
+	active_modifier = {}
+	state          = "idle"
+	stat_hands_played  = 0
+	stat_gold_earned   = 0
+	stat_towers_placed = 0
+	stat_high_cards    = 0
+	Engine.time_scale  = 1.0
+
 func _save_high_score() -> void:
 	if wave_number > high_score:
 		high_score = wave_number
 	var cfg := ConfigFile.new()
-	cfg.set_value("scores", "best_wave", high_score)
-	cfg.set_value("settings", "volume_db",   volume_db)
-	cfg.set_value("settings", "fullscreen",  fullscreen)
+	cfg.set_value("scores",   "best_wave",  high_score)
+	cfg.set_value("settings", "volume_db",  volume_db)
+	cfg.set_value("settings", "fullscreen", fullscreen)
 	cfg.save("user://save.cfg")
 
 func _load_high_score() -> void:

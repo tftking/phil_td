@@ -26,14 +26,13 @@ var target: Node2D         = null
 var fire_timer: float      = 0.0
 var fire_interval: float   = 1.0
 var aim_angle: float       = -PI * 0.5
-var projectile_scene: PackedScene = null
 
 func dps() -> float:
 	return damage * fire_rate
 
 func _ready() -> void:
 	fire_interval    = 1.0 / max(fire_rate, 0.01)
-	projectile_scene = load("res://scenes/Projectile.tscn")
+	
 	z_index          = 3
 	queue_redraw()
 
@@ -42,10 +41,16 @@ func set_highlighted(v: bool) -> void:
 		is_highlighted = v
 		queue_redraw()
 
+var _scan_frames: int = 0
+
 func _process(delta: float) -> void:
 	_recoil = move_toward(_recoil, 0.0, RECOIL_SPEED * delta)
-	fire_timer += delta
-	_acquire_target()
+	fire_timer   += delta
+	_scan_frames += 1
+	# Only scan for new target every 6 frames (~10x/sec at 60fps) to reduce O(n) cost
+	if _scan_frames >= 6:
+		_scan_frames = 0
+		_acquire_target()
 	if is_instance_valid(target):
 		var new_angle: float = (target.global_position - global_position).angle()
 		if absf(new_angle - aim_angle) > 0.04:
@@ -82,11 +87,11 @@ func _acquire_target() -> void:
 
 func _fire() -> void:
 	if not is_instance_valid(target): return
-	if projectile_scene == null: return
+	if SceneCache.projectile == null: return
 	Audio.play_shoot()
 	_recoil = RECOIL_AMT
 	queue_redraw()
-	var proj = projectile_scene.instantiate()
+	var proj = SceneCache.projectile.instantiate()
 	get_tree().current_scene.add_child(proj)
 	proj.global_position = global_position
 	proj.proj_color      = tower_color.lightened(0.3)

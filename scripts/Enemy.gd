@@ -96,8 +96,8 @@ func take_damage(amount: int) -> void:
 	_float_cooldown -= get_process_delta_time()
 	if _float_cooldown <= 0.0:
 		_float_cooldown = FLOAT_MIN_INTERVAL
-		var ft_scene := load("res://scenes/FloatText.tscn")
-		if ft_scene:
+		var ft_scene := SceneCache.float_text
+		
 			var ft = ft_scene.instantiate()
 			get_tree().current_scene.add_child(ft)
 			ft.global_position = global_position + Vector2(randf_range(-8, 8), -14)
@@ -111,8 +111,8 @@ func take_damage(amount: int) -> void:
 
 func _die() -> void:
 	# Death burst
-	var burst_scene := load("res://scenes/DeathBurst.tscn")
-	if burst_scene:
+	var burst_scene := SceneCache.death_burst
+	
 		var burst = burst_scene.instantiate()
 		get_tree().current_scene.add_child(burst)
 		burst.global_position = global_position
@@ -121,8 +121,8 @@ func _die() -> void:
 		GameManager.report_boss_cleared()
 		Audio.play_boss_dead()
 		if gold_reward > 0:
-			var ft_scene := load("res://scenes/FloatText.tscn")
-			if ft_scene:
+			var ft_scene := SceneCache.float_text
+			
 				var ft = ft_scene.instantiate()
 				get_tree().current_scene.add_child(ft)
 				ft.global_position = global_position + Vector2(0, -28)

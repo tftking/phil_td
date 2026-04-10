@@ -10,6 +10,7 @@ config/features=PackedStringArray("4.2", "Forward Plus")
 GameManager="*res://autoloads/GameManager.gd"
 Audio="*res://autoloads/Audio.gd"
 GeminiWave="*res://autoloads/GeminiWave.gd"
+SceneCache="*res://autoloads/SceneCache.gd"
 
 [display]
 window/size/viewport_width=1280

@@ -72,7 +72,8 @@ func discard_selected() -> void:
 func evaluate_selected() -> int:
 	if selected.size() != 5: return HandRank.HIGH_CARD
 	var cards: Array = selected.map(func(i): return hand[i])
-	var rank: int = evaluate(cards)
+	var rank: int    = evaluate(cards)
+	GameManager.record_hand_played()
 	var to_remove: Array = selected.duplicate()
 	to_remove.sort()
 	to_remove.reverse()

@@ -1,5 +1,11 @@
 extends Node2D
 
+# Preloaded scenes — avoids per-frame load() calls
+const PROJ_SCENE    := preload("res://scenes/Projectile.tscn")
+const FLOAT_SCENE   := preload("res://scenes/FloatText.tscn")
+const BURST_SCENE   := preload("res://scenes/DeathBurst.tscn")
+const SPLASH_SCENE  := preload("res://scenes/SplashEffect.tscn")
+
 @onready var grid: Node2D              = $Grid
 @onready var wave_manager: Node        = $WaveManager
 @onready var card_hand: Node           = $CardHand
@@ -89,6 +95,7 @@ func _on_run_over() -> void:
 
 func _on_run_won() -> void:
 	Audio.stop_music()
+	GameManager.state = "won"
 	hud.show_victory_screen()
 
 func _on_boss_cleared() -> void:

@@ -235,9 +235,15 @@ func _build_overlays() -> void:
 	var stats_lbl := Label.new()
 	stats_lbl.name = "StatsLabel"
 	stats_lbl.position = Vector2(418, 330)
-	stats_lbl.add_theme_font_size_override("font_size", 24)
+	stats_lbl.add_theme_font_size_override("font_size", 22)
 	stats_lbl.add_theme_color_override("font_color", Color(0.88, 0.88, 0.88))
 	game_over_panel.add_child(stats_lbl)
+	var stats2_lbl := Label.new()
+	stats2_lbl.name = "Stats2Label"
+	stats2_lbl.position = Vector2(418, 362)
+	stats2_lbl.add_theme_font_size_override("font_size", 15)
+	stats2_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
+	game_over_panel.add_child(stats2_lbl)
 	var hs_lbl := Label.new()
 	hs_lbl.name = "HighScoreLabel"
 	hs_lbl.position = Vector2(418, 364)
@@ -326,7 +332,7 @@ func _build_start_screen() -> void:
 	sub.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	start_screen.add_child(sub)
 
-	# Map selection
+	# Map selection with inline previews
 	var map_lbl := Label.new()
 	map_lbl.text = "Map"
 	map_lbl.position = Vector2(272, 240)
@@ -341,18 +347,27 @@ func _build_start_screen() -> void:
 		b.pressed.connect(func(): _select_map(i))
 		start_screen.add_child(b)
 		map_btns.append(b)
+		# Mini map preview below each button
+		var preview_script := load("res://scripts/MapPreview.gd")
+		if preview_script:
+			var prev := Node2D.new()
+			prev.set_script(preview_script)
+			prev.position = Vector2(272 + i * 170, 308)
+			prev.name = "MapPreview%d" % i
+			start_screen.add_child(prev)
+			prev.set_map(i)
 
 	# Difficulty selection
 	var diff_lbl := Label.new()
 	diff_lbl.text = "Difficulty"
-	diff_lbl.position = Vector2(272, 322)
+	diff_lbl.position = Vector2(272, 426)
 	diff_lbl.add_theme_font_size_override("font_size", 15)
 	diff_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	start_screen.add_child(diff_lbl)
 	for i in DIFF_NAMES.size():
 		var b := Button.new()
 		b.text = DIFF_NAMES[i]
-		b.position = Vector2(272 + i * 170, 346)
+		b.position = Vector2(272 + i * 170, 450)
 		b.size = Vector2(155, 38)
 		b.pressed.connect(func(): _select_diff(i))
 		start_screen.add_child(b)
@@ -360,22 +375,22 @@ func _build_start_screen() -> void:
 
 	var diff_desc_lbl := Label.new()
 	diff_desc_lbl.name = "DiffDescLabel"
-	diff_desc_lbl.position = Vector2(272, 396)
+	diff_desc_lbl.position = Vector2(272, 496)
 	diff_desc_lbl.add_theme_font_size_override("font_size", 13)
 	diff_desc_lbl.add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
 	start_screen.add_child(diff_desc_lbl)
 
 	if GameManager.high_score > 0:
 		var hs := Label.new()
-		hs.text = "Best: Wave %d" % GameManager.high_score
-		hs.position = Vector2(548, 430)
+		hs.text = "Best: Wave %d / %d" % [GameManager.high_score, GameManager.WIN_WAVE]
+		hs.position = Vector2(548, 534)
 		hs.add_theme_font_size_override("font_size", 17)
 		hs.add_theme_color_override("font_color", Color(1.0, 0.82, 0.22))
 		start_screen.add_child(hs)
 
 	var start_btn := Button.new()
 	start_btn.text = "Start Game"
-	start_btn.position = Vector2(560, 462)
+	start_btn.position = Vector2(560, 562)
 	start_btn.size = Vector2(160, 56)
 	start_btn.add_theme_font_size_override("font_size", 20)
 	start_btn.pressed.connect(_on_start_pressed)
@@ -574,6 +589,11 @@ func _on_run_over() -> void:
 			GameManager.wave_number, GameManager.WIN_WAVE,
 			GameManager.kills,
 			GameManager.DIFFICULTIES[GameManager.difficulty].name]
+	var stats2: Label = game_over_panel.get_node_or_null("Stats2Label")
+	if stats2:
+		stats2.text = "%d hands played   •   %d gold earned   •   %d towers built   •   %d high cards" % [
+			GameManager.stat_hands_played, GameManager.stat_gold_earned,
+			GameManager.stat_towers_placed, GameManager.stat_high_cards]
 	var hs_lbl: Label = game_over_panel.get_node_or_null("HighScoreLabel")
 	if hs_lbl:
 		if GameManager.wave_number >= GameManager.high_score and GameManager.high_score > 0:
@@ -622,10 +642,12 @@ func show_victory_screen() -> void:
 	speed_btn.text = "2x"
 	var vs: Label = victory_panel.get_node_or_null("VictoryStats")
 	if vs:
-		vs.text = "%d kills  •  %s" % [GameManager.kills,
+		vs.text = "%d kills   •   %d hands played   •   %d gold earned   •   %s" % [
+			GameManager.kills, GameManager.stat_hands_played,
+			GameManager.stat_gold_earned,
 			GameManager.DIFFICULTIES[GameManager.difficulty].name]
 	victory_panel.visible = true
-	play_btn.disabled   = true
+	play_btn.disabled    = true
 	discard_btn.disabled = true
 
 func _build_settings_panel(parent: Node, base_y: float) -> void:
