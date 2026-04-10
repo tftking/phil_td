@@ -27,6 +27,7 @@ func _process(delta: float) -> void:
 
 func _on_hit() -> void:
 	if splash_radius > 0.0:
+		Audio.play_splash()
 		for e in get_tree().get_nodes_in_group("enemies"):
 			if is_instance_valid(e) and global_position.distance_to(e.global_position) <= splash_radius:
 				e.take_damage(damage)

@@ -56,6 +56,7 @@ func _acquire_target() -> void:
 func _fire() -> void:
 	if not is_instance_valid(target): return
 	if projectile_scene == null: return
+	Audio.play_shoot()
 	var proj = projectile_scene.instantiate()
 	get_tree().current_scene.add_child(proj)
 	proj.global_position = global_position

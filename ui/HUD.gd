@@ -61,6 +61,7 @@ var sell_popup_label:    Label
 var income_popup_label:  Label
 var game_over_panel:     ColorRect
 var start_screen:        ColorRect
+var pause_panel:         ColorRect
 
 # Start-screen selection
 var map_btns:  Array = []
@@ -212,6 +213,36 @@ func _build_overlays() -> void:
 	restart_btn.pressed.connect(_on_restart_pressed)
 	game_over_panel.add_child(restart_btn)
 
+	# Pause panel
+	pause_panel = ColorRect.new()
+	pause_panel.color = Color(0, 0, 0, 0.72)
+	pause_panel.position = Vector2.ZERO
+	pause_panel.size = Vector2(1280, 720)
+	pause_panel.visible = false
+	add_child(pause_panel)
+	var pause_title := Label.new()
+	pause_title.text = "Paused"
+	pause_title.position = Vector2(540, 278)
+	pause_title.add_theme_font_size_override("font_size", 62)
+	pause_title.add_theme_color_override("font_color", Color(0.92, 0.92, 0.92))
+	pause_panel.add_child(pause_title)
+	var resume_btn := Button.new()
+	resume_btn.text = "Resume  (ESC)"
+	resume_btn.position = Vector2(540, 370)
+	resume_btn.size = Vector2(200, 50)
+	resume_btn.pressed.connect(func():
+		get_node("/root/Main")._toggle_pause())
+	pause_panel.add_child(resume_btn)
+	var quit_btn := Button.new()
+	quit_btn.text = "Quit to Title"
+	quit_btn.position = Vector2(540, 432)
+	quit_btn.size = Vector2(200, 50)
+	quit_btn.pressed.connect(func():
+		get_tree().paused = false
+		GameManager.reset()
+		get_tree().reload_current_scene())
+	pause_panel.add_child(quit_btn)
+
 func _build_start_screen() -> void:
 	start_screen = ColorRect.new()
 	start_screen.color = Color(0.04, 0.06, 0.04, 0.97)
@@ -287,6 +318,22 @@ func _build_start_screen() -> void:
 	start_btn.add_theme_font_size_override("font_size", 20)
 	start_btn.pressed.connect(_on_start_pressed)
 	start_screen.add_child(start_btn)
+
+	# Gemini API key field
+	var gkey_lbl := Label.new()
+	gkey_lbl.text = "Gemini API key (optional — enables AI wave generation)"
+	gkey_lbl.position = Vector2(272, 540)
+	gkey_lbl.add_theme_font_size_override("font_size", 12)
+	gkey_lbl.add_theme_color_override("font_color", Color(0.42, 0.42, 0.42))
+	start_screen.add_child(gkey_lbl)
+	var gkey_edit := LineEdit.new()
+	gkey_edit.placeholder_text = "AIza..."
+	gkey_edit.position = Vector2(272, 560)
+	gkey_edit.size = Vector2(448, 36)
+	gkey_edit.secret = true
+	gkey_edit.text = GeminiWave.api_key
+	gkey_edit.text_changed.connect(func(v: String): GeminiWave.api_key = v)
+	start_screen.add_child(gkey_edit)
 
 	_update_selection_visuals()
 
@@ -448,6 +495,9 @@ func _on_run_over() -> void:
 	game_over_panel.visible = true
 	play_btn.disabled = true
 	discard_btn.disabled = true
+
+func show_pause_screen(show: bool) -> void:
+	pause_panel.visible = show
 
 func _on_restart_pressed() -> void:
 	GameManager.reset()

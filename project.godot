@@ -8,6 +8,8 @@ config/features=PackedStringArray("4.2", "Forward Plus")
 
 [autoload]
 GameManager="*res://autoloads/GameManager.gd"
+Audio="*res://autoloads/Audio.gd"
+GeminiWave="*res://autoloads/GeminiWave.gd"
 
 [display]
 window/size/viewport_width=1280

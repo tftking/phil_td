@@ -58,6 +58,15 @@ func take_damage(amount: int) -> void:
 	_flash_timer = FLASH_DUR
 	modulate     = Color(2.2, 0.25, 0.25)
 	queue_redraw()
+	# Floating damage number
+	var ft_scene := load("res://scenes/FloatText.tscn")
+	if ft_scene:
+		var ft = ft_scene.instantiate()
+		get_tree().current_scene.add_child(ft)
+		ft.global_position = global_position + Vector2(randf_range(-8, 8), -14)
+		var col := Color(1.0, 0.4, 0.4) if not is_boss else Color(1.0, 0.6, 0.0)
+		ft.init("-%d" % amount, col, 14 if not is_boss else 18)
+	Audio.play_hit()
 	if is_boss:
 		GameManager.report_boss_health(health, max_health)
 	if health <= 0:
@@ -66,6 +75,14 @@ func take_damage(amount: int) -> void:
 func _die() -> void:
 	if is_boss:
 		GameManager.report_boss_cleared()
+		Audio.play_boss_dead()
+		# Big gold float
+		var ft_scene := load("res://scenes/FloatText.tscn")
+		if ft_scene:
+			var ft = ft_scene.instantiate()
+			get_tree().current_scene.add_child(ft)
+			ft.global_position = global_position + Vector2(0, -24)
+			ft.init("+%d gold" % gold_reward, Color(1.0, 0.85, 0.22), 20)
 	GameManager.add_gold(gold_reward)
 	GameManager.add_kill()
 	died.emit(self)

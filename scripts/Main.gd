@@ -6,43 +6,56 @@ extends Node2D
 @onready var tower_placer: Node        = $TowerPlacer
 @onready var hud: CanvasLayer          = $HUD
 @onready var card_hand_ui: CanvasLayer = $CardHandUI
+@onready var camera: Camera2D          = $Camera2D
 
-var _hovered_tower: Node = null
+var _hovered_tower: Node  = null
+var _paused: bool         = false
+var _shake_timer: float   = 0.0
+var _shake_mag: float     = 0.0
+const SHAKE_DUR: float    = 0.45
+const SHAKE_STRENGTH: float = 7.0
 
 func _ready() -> void:
 	await get_tree().process_frame
 
-	# Connect signals before waiting for game_started so HUD is wired
 	tower_placer.init(grid)
 	GameManager.wave_cleared.connect(_on_wave_cleared)
 	GameManager.wave_started.connect(func(w): hud.show_wave_announcement(w))
 	GameManager.run_over.connect(_on_run_over)
-	tower_placer.placement_done.connect(func(): hud.hide_placing_label())
+	GameManager.boss_cleared.connect(_on_boss_cleared)
+	tower_placer.placement_done.connect(func():
+		Audio.play_place()
+		hud.hide_placing_label())
 	tower_placer.placement_cancelled.connect(func(): hud.hide_placing_label())
 	wave_manager.progress_updated.connect(func(rem, tot): hud.update_wave_progress(rem, tot))
+	GeminiWave.wave_ready.connect(_on_wave_ready)
 
 	card_hand.reset_for_wave()
-
-	# Wait for player to press Start on the start screen
 	await GameManager.game_started
-
-	# Rebuild grid for selected map (user may have changed it on start screen)
 	grid.rebuild_for_map(GameManager.selected_map)
 	wave_manager.init(grid.world_path)
-
 	await get_tree().create_timer(0.35).timeout
 	_start_next_wave()
 
 func _start_next_wave() -> void:
 	GameManager.start_wave()
-	# Passive income from wave 2 onward
 	if GameManager.wave_number > 1:
 		var income := 20 + GameManager.wave_number * 5
 		GameManager.add_gold(income)
 		hud.show_income_popup(income)
-	wave_manager.start_wave(_generate_wave(GameManager.wave_number))
+	# Request wave from Gemini (falls back to procedural if no key or timeout)
+	GeminiWave.generate(GameManager.wave_number, _generate_wave_fallback)
+
+func _on_wave_ready(wave_data: Array) -> void:
+	# Check if boss in wave — play warning sound
+	for e in wave_data:
+		if e.get("is_boss", false):
+			Audio.play_boss_spawn()
+			break
+	wave_manager.start_wave(wave_data)
 
 func _on_wave_cleared(wave_num: int) -> void:
+	Audio.play_wave_clear()
 	card_hand.reset_for_wave()
 	await hud.run_countdown(wave_num, GameManager.wave_kills)
 	if GameManager.state != "over":
@@ -51,10 +64,29 @@ func _on_wave_cleared(wave_num: int) -> void:
 func _on_run_over() -> void:
 	pass
 
+func _on_boss_cleared() -> void:
+	_start_shake(SHAKE_STRENGTH, SHAKE_DUR)
+
 # ---------------------------------------------------------------------------
-# Wave generation  — swap body for Gemini call later
+# Screen shake
 # ---------------------------------------------------------------------------
-func _generate_wave(wave_num: int) -> Array:
+func _start_shake(mag: float, dur: float) -> void:
+	_shake_mag   = mag
+	_shake_timer = dur
+
+func _process(delta: float) -> void:
+	if _shake_timer > 0.0:
+		_shake_timer -= delta
+		var t := _shake_timer / SHAKE_DUR
+		var offset := Vector2(randf_range(-1, 1), randf_range(-1, 1)) * _shake_mag * t
+		camera.offset = offset
+	else:
+		camera.offset = Vector2.ZERO
+
+# ---------------------------------------------------------------------------
+# Wave fallback (used when Gemini is not configured)
+# ---------------------------------------------------------------------------
+func _generate_wave_fallback(wave_num: int) -> Array:
 	var d    := GameManager.diff()
 	var base_hp:    int   = int((70 + wave_num * 28) * d.hp)
 	var base_spd:   float = (58.0 + wave_num * 4.5) * d.spd
@@ -63,7 +95,8 @@ func _generate_wave(wave_num: int) -> Array:
 	var data: Array       = []
 
 	for _i in (5 + wave_num * 2):
-		data.append({delay=base_delay, health=base_hp, speed=base_spd, reward=reward})
+		data.append({delay=base_delay, health=base_hp, speed=base_spd, reward=reward,
+			color=Color(0.85, 0.18, 0.18)})
 
 	if wave_num >= 3:
 		for _i in clampi(wave_num - 2, 1, 8):
@@ -88,6 +121,16 @@ func _generate_wave(wave_num: int) -> Array:
 func _input(event: InputEvent) -> void:
 	if GameManager.state == "over": return
 
+	# Pause toggle
+	if event.is_action_pressed("ui_cancel"):
+		if tower_placer.is_placing:
+			tower_placer.cancel()
+		else:
+			_toggle_pause()
+		return
+
+	if _paused: return
+
 	if event is InputEventMouseButton and event.pressed:
 		var mpos: Vector2  = get_global_mouse_position()
 		var cell: Vector2i = grid.world_to_cell(mpos)
@@ -110,21 +153,24 @@ func _input(event: InputEvent) -> void:
 			if tower != _hovered_tower:
 				if is_instance_valid(_hovered_tower):
 					_hovered_tower.set_highlighted(false)
-				_hovered_tower = tower if (tower != null and is_instance_valid(tower)) else null
+				_hovered_tower = (tower if (tower != null and is_instance_valid(tower)) else null)
 				if _hovered_tower:
 					_hovered_tower.set_highlighted(true)
 					hud.show_tower_info(_hovered_tower)
 				else:
 					hud.clear_tower_info()
 
-	if event.is_action_pressed("ui_cancel"):
-		tower_placer.cancel()
+func _toggle_pause() -> void:
+	_paused = not _paused
+	get_tree().paused = _paused
+	hud.show_pause_screen(_paused)
 
 func _try_sell_tower(cell: Vector2i) -> void:
 	var tower = grid.tower_slots.get(cell)
 	if tower == null or not is_instance_valid(tower): return
 	if _hovered_tower == tower:
 		_hovered_tower = null
+	Audio.play_sell()
 	var gold_back: int = tower.sell_value
 	GameManager.add_gold(gold_back)
 	grid.remove_tower(cell)
