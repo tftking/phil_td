@@ -13,22 +13,23 @@ var world_path: Array = []
 var path_index: int   = 1
 var is_boss: bool     = false
 
-# Status effects
 var _slow_timer: float   = 0.0
 var _poison_timer: float = 0.0
 var _poison_tick: float  = 0.0
-const POISON_DPS: float  = 6.0
-const POISON_TICK: float = 0.4
-const SLOW_MULT: float   = 0.45
-
 var _flash_timer: float  = 0.0
-const FLASH_DUR: float   = 0.10
+var _float_cooldown: float = 0.0
+
+const POISON_DPS: float       = 6.0
+const POISON_TICK: float      = 0.4
+const SLOW_MULT: float        = 0.45
+const FLASH_DUR: float        = 0.10
+const FLOAT_MIN_INTERVAL: float = 0.14
 
 signal died(enemy: Node2D)
 signal reached_base(enemy: Node2D)
 
 func _ready() -> void:
-	health = max_health
+	health  = max_health
 	z_index = 2
 	add_to_group("enemies")
 
@@ -45,9 +46,14 @@ func _process(delta: float) -> void:
 		call_deferred("queue_free")
 		set_process(false)
 		return
-	# Status timers
-	if _slow_timer > 0.0:
-		_slow_timer -= delta
+
+	if _float_cooldown > 0.0: _float_cooldown -= delta
+	if _flash_timer   > 0.0:
+		_flash_timer -= delta
+		if _flash_timer <= 0.0: modulate = Color.WHITE
+
+	if _slow_timer > 0.0: _slow_timer -= delta
+
 	if _poison_timer > 0.0:
 		_poison_timer -= delta
 		_poison_tick  -= delta
@@ -58,20 +64,10 @@ func _process(delta: float) -> void:
 			if health <= 0:
 				_die()
 				return
-	var spd_mult: float = SLOW_MULT if _slow_timer > 0.0 else 1.0
-	_move_step(delta * spd_mult)
-	if _flash_timer > 0.0:
-		_flash_timer -= delta
-		if _flash_timer <= 0.0:
-			modulate = Color.WHITE
-	queue_redraw()
 
-func apply_status(s_type: int, duration: float) -> void:
-	match s_type:
-		1: _slow_timer   = max(_slow_timer, duration)
-		2:
-			_poison_timer = max(_poison_timer, duration)
-			if _poison_tick <= 0.0: _poison_tick = POISON_TICK
+	var spd_mult := SLOW_MULT if _slow_timer > 0.0 else 1.0
+	_move_step(delta * spd_mult)
+	queue_redraw()
 
 func _move_step(delta: float) -> void:
 	var target: Vector2 = world_path[path_index]
@@ -84,49 +80,43 @@ func _move_step(delta: float) -> void:
 	else:
 		global_position += diff.normalized() * step
 
-var _float_cooldown: float = 0.0
-const FLOAT_MIN_INTERVAL: float = 0.12
+func apply_status(s_type: int, duration: float) -> void:
+	match s_type:
+		1: _slow_timer   = max(_slow_timer, duration)
+		2:
+			_poison_timer = max(_poison_timer, duration)
+			if _poison_tick <= 0.0: _poison_tick = POISON_TICK
 
 func take_damage(amount: int) -> void:
-	health = max(0, health - amount)
+	health       = max(0, health - amount)
 	_flash_timer = FLASH_DUR
 	modulate     = Color(2.2, 0.25, 0.25)
 	queue_redraw()
-	# Throttle float text to avoid spam from rapid fire towers
-	_float_cooldown -= get_process_delta_time()
 	if _float_cooldown <= 0.0:
 		_float_cooldown = FLOAT_MIN_INTERVAL
-		var ft_scene := SceneCache.float_text
-		
-			var ft = ft_scene.instantiate()
-			get_tree().current_scene.add_child(ft)
-			ft.global_position = global_position + Vector2(randf_range(-8, 8), -14)
-			var col := Color(1.0, 0.4, 0.4) if not is_boss else Color(1.0, 0.6, 0.0)
-			ft.init("-%d" % amount, col, 14 if not is_boss else 18)
+		var ft = SceneCache.float_text.instantiate()
+		get_tree().current_scene.add_child(ft)
+		ft.global_position = global_position + Vector2(randf_range(-8, 8), -14)
+		ft.init("-%d" % amount,
+			Color(1.0, 0.4, 0.4) if not is_boss else Color(1.0, 0.6, 0.0),
+			14 if not is_boss else 18)
 	Audio.play_hit()
-	if is_boss:
-		GameManager.report_boss_health(health, max_health)
-	if health <= 0:
-		_die()
+	if is_boss: GameManager.report_boss_health(health, max_health)
+	if health <= 0: _die()
 
 func _die() -> void:
-	# Death burst
-	var burst_scene := SceneCache.death_burst
-	
-		var burst = burst_scene.instantiate()
-		get_tree().current_scene.add_child(burst)
-		burst.global_position = global_position
-		burst.init(enemy_color, is_boss)
+	var burst = SceneCache.death_burst.instantiate()
+	get_tree().current_scene.add_child(burst)
+	burst.global_position = global_position
+	burst.init(enemy_color, is_boss)
 	if is_boss:
 		GameManager.report_boss_cleared()
 		Audio.play_boss_dead()
 		if gold_reward > 0:
-			var ft_scene := SceneCache.float_text
-			
-				var ft = ft_scene.instantiate()
-				get_tree().current_scene.add_child(ft)
-				ft.global_position = global_position + Vector2(0, -28)
-				ft.init("+%d gold" % gold_reward, Color(1.0, 0.85, 0.22), 22)
+			var ft = SceneCache.float_text.instantiate()
+			get_tree().current_scene.add_child(ft)
+			ft.global_position = global_position + Vector2(0, -28)
+			ft.init("+%d gold" % gold_reward, Color(1.0, 0.85, 0.22), 22)
 	GameManager.add_gold(gold_reward)
 	GameManager.add_kill()
 	died.emit(self)
@@ -134,71 +124,51 @@ func _die() -> void:
 
 func _draw() -> void:
 	match enemy_type:
-		Type.NORMAL:
-			_draw_circle_enemy(12.0)
-		Type.RUNNER:
-			_draw_triangle_enemy(13.0)
-		Type.ARMORED:
-			_draw_diamond_enemy(13.0)
-		Type.BOSS:
-			_draw_boss_enemy(20.0)
+		Type.NORMAL:  _draw_circle_enemy(12.0)
+		Type.RUNNER:  _draw_triangle_enemy(13.0)
+		Type.ARMORED: _draw_diamond_enemy(13.0)
+		Type.BOSS:    _draw_boss_enemy(20.0)
 	_draw_hp_bar()
 
 func _draw_circle_enemy(r: float) -> void:
 	draw_circle(Vector2.ZERO, r, enemy_color)
 	draw_arc(Vector2.ZERO, r, 0, TAU, 20, Color(0, 0, 0, 0.5), 1.5)
-	if _slow_timer > 0.0:
-		draw_circle(Vector2.ZERO, r, Color(0.3, 0.6, 1.0, 0.35))
-	elif _poison_timer > 0.0:
-		draw_circle(Vector2.ZERO, r, Color(0.1, 0.85, 0.1, 0.35))
+	if _slow_timer   > 0.0: draw_circle(Vector2.ZERO, r, Color(0.3, 0.6, 1.0, 0.35))
+	elif _poison_timer > 0.0: draw_circle(Vector2.ZERO, r, Color(0.1, 0.85, 0.1, 0.35))
 
 func _draw_triangle_enemy(r: float) -> void:
-	# Pointy triangle pointing in direction of travel
-	var pts: PackedVector2Array = [
-		Vector2(0, -r * 1.2),
-		Vector2(r, r * 0.8),
-		Vector2(-r, r * 0.8),
-	]
+	var pts := PackedVector2Array([Vector2(0,-r*1.2), Vector2(r,r*0.8), Vector2(-r,r*0.8)])
 	draw_colored_polygon(pts, enemy_color)
-	draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[0]]),
-		Color(0, 0, 0, 0.5), 1.5)
+	draw_polyline(PackedVector2Array([pts[0],pts[1],pts[2],pts[0]]), Color(0,0,0,0.5), 1.5)
+	if _slow_timer   > 0.0: draw_colored_polygon(pts, Color(0.3, 0.6, 1.0, 0.28))
+	elif _poison_timer > 0.0: draw_colored_polygon(pts, Color(0.1, 0.85, 0.1, 0.28))
 
 func _draw_diamond_enemy(r: float) -> void:
-	var pts: PackedVector2Array = [
-		Vector2(0, -r * 1.3),
-		Vector2(r * 0.9, 0),
-		Vector2(0,  r * 1.3),
-		Vector2(-r * 0.9, 0),
-	]
+	var pts := PackedVector2Array([Vector2(0,-r*1.3),Vector2(r*0.9,0),Vector2(0,r*1.3),Vector2(-r*0.9,0)])
 	draw_colored_polygon(pts, enemy_color)
-	draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3], pts[0]]),
-		Color(0, 0, 0, 0.5), 2.0)
-	# Armor cross-hatch
-	draw_line(Vector2(-r * 0.5, -r * 0.5), Vector2(r * 0.5,  r * 0.5),
-		Color(0, 0, 0, 0.25), 1.0)
-	draw_line(Vector2( r * 0.5, -r * 0.5), Vector2(-r * 0.5, r * 0.5),
-		Color(0, 0, 0, 0.25), 1.0)
+	draw_polyline(PackedVector2Array([pts[0],pts[1],pts[2],pts[3],pts[0]]), Color(0,0,0,0.5), 2.0)
+	draw_line(Vector2(-r*0.5,-r*0.5), Vector2(r*0.5, r*0.5), Color(0,0,0,0.25), 1.0)
+	draw_line(Vector2( r*0.5,-r*0.5), Vector2(-r*0.5,r*0.5), Color(0,0,0,0.25), 1.0)
+	if _slow_timer   > 0.0: draw_colored_polygon(pts, Color(0.3, 0.6, 1.0, 0.28))
+	elif _poison_timer > 0.0: draw_colored_polygon(pts, Color(0.1, 0.85, 0.1, 0.28))
 
 func _draw_boss_enemy(r: float) -> void:
-	# Outer glow ring
-	draw_arc(Vector2.ZERO, r + 5, 0, TAU, 32,
-		Color(enemy_color.r, enemy_color.g, enemy_color.b, 0.35), 3.0)
+	draw_arc(Vector2.ZERO, r+5, 0, TAU, 32, Color(enemy_color.r,enemy_color.g,enemy_color.b,0.35), 3.0)
 	draw_circle(Vector2.ZERO, r, enemy_color)
-	draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(0, 0, 0, 0.5), 2.5)
-	# Crown spikes
+	draw_arc(Vector2.ZERO, r, 0, TAU, 32, Color(0,0,0,0.5), 2.5)
 	for i in 5:
-		var a := (TAU / 5.0) * i - PI * 0.5
-		var inner := Vector2(cos(a), sin(a)) * (r - 4)
-		var outer := Vector2(cos(a), sin(a)) * (r + 9)
-		draw_line(inner, outer, Color(1.0, 0.85, 0.15, 0.9), 2.5)
+		var a := (TAU/5.0)*i - PI*0.5
+		draw_line(Vector2(cos(a),sin(a))*(r-4), Vector2(cos(a),sin(a))*(r+9),
+			Color(1.0,0.85,0.15,0.9), 2.5)
+	if _slow_timer   > 0.0: draw_circle(Vector2.ZERO, r, Color(0.3, 0.6, 1.0, 0.28))
+	elif _poison_timer > 0.0: draw_circle(Vector2.ZERO, r, Color(0.1, 0.85, 0.1, 0.28))
 
 func _draw_hp_bar() -> void:
-	var bw: float = 32.0 if is_boss else 26.0
-	var r: float  = 20.0 if is_boss else 12.0
-	var by: float = -(r + 10.0)
-	draw_rect(Rect2(-bw * 0.5, by, bw, 4), Color(0.12, 0.0, 0.0))
+	var bw := 32.0 if is_boss else 26.0
+	var r  := 20.0 if is_boss else 12.0
+	var by := -(r + 10.0)
+	draw_rect(Rect2(-bw*0.5, by, bw, 4), Color(0.12,0.0,0.0))
 	var ratio := float(health) / float(max_health)
-	var col   := (Color(0.1, 0.85, 0.1) if ratio > 0.5
-		else (Color(0.9, 0.7, 0.0) if ratio > 0.25
-		else Color(0.9, 0.1, 0.1)))
-	draw_rect(Rect2(-bw * 0.5, by, bw * ratio, 4), col)
+	var col   := (Color(0.1,0.85,0.1) if ratio > 0.5
+		else (Color(0.9,0.7,0.0) if ratio > 0.25 else Color(0.9,0.1,0.1)))
+	draw_rect(Rect2(-bw*0.5, by, bw*ratio, 4), col)

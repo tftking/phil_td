@@ -84,6 +84,11 @@ func _on_hand_evaluated_main(rank: int, _cards: Array) -> void:
 
 func _on_wave_cleared(wave_num: int) -> void:
 	Audio.play_wave_clear()
+	# Life bonus — 3 gold per remaining life
+	if GameManager.lives > 0:
+		var bonus := GameManager.lives * 3
+		GameManager.add_gold(bonus)
+		hud.show_income_popup(bonus, "life bonus")
 	card_hand.reset_for_wave()
 	if GameManager.state != "over":
 		await hud.run_countdown(wave_num, GameManager.wave_kills)
@@ -158,6 +163,9 @@ func _input(event: InputEvent) -> void:
 				var ch := card_hand
 				if ch and ch.discards_remaining > 0 and ch.selected.size() > 0:
 					ch.discard_selected()
+				return
+			KEY_TAB:
+				hud.toggle_speed()
 				return
 			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
 				var idx := event.keycode - KEY_1

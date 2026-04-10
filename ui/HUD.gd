@@ -101,7 +101,10 @@ func _build_top_bar() -> void:
 	kills_label  = _lbl("Kills: 0",   Vector2(468, 9))
 	var tl := _lbl("Towers: 0", Vector2(590, 9))
 	tl.name = "TowersLabel"
-	status_label = _lbl("",           Vector2(720, 9))
+	var sl := _lbl("Score: 0", Vector2(718, 9))
+	sl.name = "ScoreLabel"
+	sl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))
+	status_label = _lbl("", Vector2(860, 9))
 	status_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
 	speed_btn = _btn("2x", Vector2(900, 3), Vector2(54, 30))
 	speed_btn.pressed.connect(_on_speed_toggle)
@@ -147,6 +150,9 @@ func _build_right_panel() -> void:
 	tower_range_lbl  = _lbl("",   Vector2(px, 203), 12)
 	tower_splash_lbl = _lbl("",   Vector2(px + 148, 203), 12)
 	tower_sell_lbl   = _lbl("",   Vector2(px, 220), 12)
+	var preview_hint := _lbl("", Vector2(px, 220), 11)
+	preview_hint.name = "PlacementHint"
+	preview_hint.add_theme_color_override("font_color", Color(0.55, 0.82, 0.55))
 	for l in [tower_dmg_lbl, tower_rate_lbl, tower_range_lbl, tower_splash_lbl, tower_sell_lbl]:
 		l.add_theme_color_override("font_color", Color(0.68, 0.68, 0.68))
 	_sep(px, 240, 285)
@@ -172,7 +178,7 @@ func _build_bottom_bar() -> void:
 	placing_label = _lbl("", Vector2(30, 528), 15)
 	placing_label.add_theme_color_override("font_color", Color(0.22, 1.0, 0.38))
 	placing_label.visible = false
-	_lbl("Yellow=upgrade  •  Right-click=sell  •  Mid=cycle target  •  1-8 select cards  •  Space=play  •  D=discard", Vector2(30, 556), 11).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
+	_lbl("Yellow=upgrade  •  Right-click=sell  •  Mid=cycle target  •  1-8 select  •  Space=play  •  D=discard  •  Tab=2x", Vector2(30, 556), 11).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
 	discard_count_label = _lbl("Discards: 3", Vector2(1040, 492))
 	play_btn = _btn("Play Hand", Vector2(1055, 518), Vector2(155, 44))
 	play_btn.pressed.connect(_on_play_pressed)
@@ -311,6 +317,56 @@ func _build_overlays() -> void:
 		get_tree().reload_current_scene())
 	pause_panel.add_child(quit_btn)
 
+	var credits_btn := Button.new()
+	credits_btn.text = "Credits"
+	credits_btn.position = Vector2(540, 494)
+	credits_btn.size = Vector2(200, 40)
+	credits_btn.pressed.connect(_on_credits_pressed)
+	pause_panel.add_child(credits_btn)
+
+	# Credits sub-panel (hidden by default)
+	var credits_panel := ColorRect.new()
+	credits_panel.name = "CreditsPanel"
+	credits_panel.color = Color(0.05, 0.05, 0.05, 0.96)
+	credits_panel.position = Vector2(390, 120)
+	credits_panel.size = Vector2(500, 420)
+	credits_panel.visible = false
+	pause_panel.add_child(credits_panel)
+
+	var credits_text := """Poker TD
+
+Design & Code
+  Built with Godot 4
+
+Libraries
+  Godot Engine — godotengine.org
+
+Audio
+  Procedural synthesis — no external assets
+
+Special Thanks
+  StarCraft Brood War Poker Defense (original)
+  Balatro (LocalThunk)
+  Kenney.nl (free game assets inspiration)
+
+Made with Claude"""
+
+	var ct := Label.new()
+	ct.text = credits_text
+	ct.position = Vector2(40, 30)
+	ct.size = Vector2(420, 360)
+	ct.autowrap_mode = TextServer.AUTOWRAP_WORD
+	ct.add_theme_font_size_override("font_size", 16)
+	ct.add_theme_color_override("font_color", Color(0.82, 0.82, 0.82))
+	credits_panel.add_child(ct)
+
+	var close_btn := Button.new()
+	close_btn.text = "Close"
+	close_btn.position = Vector2(200, 370)
+	close_btn.size = Vector2(100, 36)
+	close_btn.pressed.connect(func(): credits_panel.visible = false)
+	credits_panel.add_child(close_btn)
+
 func _build_start_screen() -> void:
 	start_screen = ColorRect.new()
 	start_screen.color = Color(0.04, 0.06, 0.04, 0.97)
@@ -433,6 +489,9 @@ func _connect_gm_signals() -> void:
 	GameManager.tower_count_changed.connect(func(c):
 		var tl := get_node_or_null("TowersLabel")
 		if tl: tl.text = "Towers: %d" % c)
+	GameManager.score_changed.connect(func(s):
+		var sl := get_node_or_null("ScoreLabel")
+		if sl: sl.text = "Score: %d" % s)
 	GameManager.run_over.connect(_on_run_over)
 	GameManager.run_won.connect(func(): show_victory_screen())
 	GameManager.wave_cleared.connect(func(_w): status_label.text = "Wave cleared!")
@@ -481,6 +540,20 @@ func _on_placement_started(tower_lbl: String, suit_bonus: String) -> void:
 	var bonus_txt := ("  [%s]" % suit_bonus) if suit_bonus != "" else ""
 	placing_label.text = "Placing: %s%s   (ESC / right-click to cancel)" % [tower_lbl, bonus_txt]
 	placing_label.visible = true
+	# Show projected stats in tower info panel
+	var tp := get_node_or_null("/root/Main/TowerPlacer")
+	if tp and tp.pending_rank > 0:
+		var cfg: Dictionary = tp.CONFIGS[tp.pending_rank]
+		tower_name_lbl.text = cfg.get("label", "?") + "  (preview)"
+		tower_name_lbl.add_theme_color_override("font_color", cfg.get("color", Color.WHITE).lightened(0.3))
+		tower_dmg_lbl.text    = "DMG  %d  (%.0f DPS)" % [cfg.get("damage",0), cfg.get("damage",0) * cfg.get("rate",1.0)]
+		tower_rate_lbl.text   = "RATE  %.1f/s" % cfg.get("rate", 1.0)
+		tower_range_lbl.text  = "RANGE  %d" % int(cfg.get("range", 100.0))
+		var spl: float = cfg.get("splash", 0.0)
+		tower_splash_lbl.text = ("SPLASH  %d" % int(spl)) if spl > 0 else ""
+		tower_sell_lbl.text   = "Sell: +%d gold" % cfg.get("sell", 0)
+		var hint: Label = get_node_or_null("PlacementHint")
+		if hint: hint.text = ""
 
 func hide_placing_label() -> void:
 	placing_label.visible = false
@@ -569,8 +642,8 @@ func show_sell_feedback(amount: int) -> void:
 	tw.parallel().tween_property(sell_popup_label, "modulate:a", 0.0, 0.75)
 	tw.tween_callback(func(): sell_popup_label.visible = false)
 
-func show_income_popup(amount: int) -> void:
-	income_popup_label.text = "+%d gold (income)" % amount
+func show_income_popup(amount: int, label: String = "income") -> void:
+	income_popup_label.text = "+%d gold (%s)" % [amount, label]
 	income_popup_label.position = Vector2(560, 290)
 	income_popup_label.modulate.a = 1.0
 	income_popup_label.visible = true
@@ -591,9 +664,10 @@ func _on_run_over() -> void:
 			GameManager.DIFFICULTIES[GameManager.difficulty].name]
 	var stats2: Label = game_over_panel.get_node_or_null("Stats2Label")
 	if stats2:
-		stats2.text = "%d hands played   •   %d gold earned   •   %d towers built   •   %d high cards" % [
-			GameManager.stat_hands_played, GameManager.stat_gold_earned,
-			GameManager.stat_towers_placed, GameManager.stat_high_cards]
+		stats2.text = "Score: %d   •   %d hands   •   %d gold earned   •   %d towers   •   %d high cards" % [
+			GameManager.score, GameManager.stat_hands_played,
+			GameManager.stat_gold_earned, GameManager.stat_towers_placed,
+			GameManager.stat_high_cards]
 	var hs_lbl: Label = game_over_panel.get_node_or_null("HighScoreLabel")
 	if hs_lbl:
 		if GameManager.wave_number >= GameManager.high_score and GameManager.high_score > 0:
@@ -642,9 +716,9 @@ func show_victory_screen() -> void:
 	speed_btn.text = "2x"
 	var vs: Label = victory_panel.get_node_or_null("VictoryStats")
 	if vs:
-		vs.text = "%d kills   •   %d hands played   •   %d gold earned   •   %s" % [
-			GameManager.kills, GameManager.stat_hands_played,
-			GameManager.stat_gold_earned,
+		vs.text = "Score: %d   •   %d kills   •   %d hands   •   %s" % [
+			GameManager.score, GameManager.kills,
+			GameManager.stat_hands_played,
 			GameManager.DIFFICULTIES[GameManager.difficulty].name]
 	victory_panel.visible = true
 	play_btn.disabled    = true
@@ -693,6 +767,10 @@ func _build_settings_panel(parent: Node, base_y: float) -> void:
 	fsbtn.toggled.connect(func(v): GameManager.apply_fullscreen(v))
 	parent.add_child(fsbtn)
 
+func _on_credits_pressed() -> void:
+	var cp := pause_panel.get_node_or_null("CreditsPanel")
+	if cp: cp.visible = not cp.visible
+
 func _on_restart_pressed() -> void:
 	GameManager.reset()
 	get_tree().reload_current_scene()
@@ -704,9 +782,22 @@ func _on_start_pressed() -> void:
 	GameManager.game_started.emit()
 
 func _on_speed_toggle() -> void:
+	toggle_speed()
+
+func toggle_speed() -> void:
 	speed_val = 2.0 if speed_val == 1.0 else 1.0
 	Engine.time_scale = speed_val
 	speed_btn.text = "1x" if speed_val == 2.0 else "2x"
+
+func show_income_popup(amount: int, label: String = "income") -> void:
+	income_popup_label.text = "+%d gold (%s)" % [amount, label]
+	income_popup_label.position = Vector2(560, 290)
+	income_popup_label.modulate.a = 1.0
+	income_popup_label.visible = true
+	var tw := create_tween()
+	tw.tween_property(income_popup_label, "position:y", 232.0, 0.9).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(income_popup_label, "modulate:a", 0.0, 0.9)
+	tw.tween_callback(func(): income_popup_label.visible = false)
 
 func _on_play_pressed() -> void:
 	var ch := _ch()

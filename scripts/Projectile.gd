@@ -40,9 +40,7 @@ func _on_hit() -> void:
 				e.take_damage(damage)
 				if status_type > 0:
 					e.apply_status(status_type, status_duration)
-		var fx_scene = SceneCache.splash_effect
-		
-			var fx = fx_scene.instantiate()
+		var fx = SceneCache.splash_effect.instantiate()
 			get_tree().current_scene.add_child(fx)
 			fx.global_position = global_position
 			fx.init(splash_radius, proj_color)

@@ -12,8 +12,11 @@ signal boss_cleared()
 signal game_started()
 signal modifier_rolled(modifier: Dictionary)
 signal tower_count_changed(count: int)
+signal score_changed(score: int)
 
 const WIN_WAVE: int = 30
+
+var score: int = 0
 
 const DIFFICULTIES: Array = [
 	{name="Easy",   hp=0.65, spd=0.88, reward=1.40, lives=25},
@@ -84,6 +87,10 @@ func spend_gold(amount: int) -> bool:
 func add_kill() -> void:
 	kills += 1
 	wave_kills += 1
+	# Score = kills weighted by wave number and difficulty
+	var pts := wave_number * DIFFICULTIES[difficulty].hp
+	score += int(pts)
+	score_changed.emit(score)
 	kill_registered.emit()
 
 func lose_life(amount: int = 1) -> void:
@@ -149,6 +156,7 @@ func reset() -> void:
 	stat_gold_earned   = 0
 	stat_towers_placed = 0
 	stat_high_cards    = 0
+	score              = 0
 	Engine.time_scale  = 1.0
 
 func _save_high_score() -> void:
