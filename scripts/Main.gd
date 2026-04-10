@@ -20,7 +20,8 @@ func _ready() -> void:
 	wave_manager.progress_updated.connect(func(rem, tot): hud.update_wave_progress(rem, tot))
 
 	card_hand.reset_for_wave()
-	await get_tree().create_timer(0.5).timeout
+	await GameManager.game_started
+	await get_tree().create_timer(0.3).timeout
 	_start_next_wave()
 
 func _start_next_wave() -> void:
@@ -61,7 +62,7 @@ func _generate_wave(wave_num: int) -> Array:
 
 	if wave_num % 5 == 0:
 		data.append({delay=0.5, health=base_hp * 9, speed=base_spd * 0.42,
-			reward=reward * 6, color=Color(0.75, 0.08, 0.85)})
+			reward=reward * 6, color=Color(0.75, 0.08, 0.85), is_boss=true})
 
 	data.shuffle()
 	return data

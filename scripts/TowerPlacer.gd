@@ -1,6 +1,5 @@
 extends Node
 
-# Index matches CardHand.HandRank enum (0 = HIGH_CARD, no placement)
 const CONFIGS: Array = [
 	{},  # HIGH_CARD
 	{label="Archer",  color=Color(0.35, 0.60, 0.95), damage=10,  rate=1.0,  range=120.0, splash=0.0,   speed=220.0, sell=20},
@@ -17,7 +16,7 @@ const CONFIGS: Array = [
 var grid: Node
 var tower_scene: PackedScene
 var pending_rank: int = -1
-var is_placing: bool = false
+var is_placing: bool  = false
 
 signal placement_started(tower_label: String)
 signal placement_done()
@@ -36,16 +35,29 @@ func init(g: Node) -> void:
 	grid = g
 
 func _on_hand_evaluated(rank: int, _cards: Array) -> void:
-	if rank == 0:
-		return
+	if rank == 0: return
 	pending_rank = rank
-	is_placing = true
+	is_placing   = true
 	grid.placement_mode = true
 	placement_started.emit(CONFIGS[rank]["label"])
 
 func try_place(cell: Vector2i) -> void:
 	if not is_placing or pending_rank <= 0: return
-	if not grid.can_place_tower(cell): return
+	if not grid.is_valid_cell(cell): return
+	if grid.is_path_cell(cell): return
+
+	var existing = grid.tower_slots.get(cell)
+	var upgrading: bool = existing != null and is_instance_valid(existing)
+
+	if upgrading:
+		if pending_rank <= existing.hand_rank:
+			return  # can't downgrade
+		# Refund half the old tower's sell value
+		GameManager.add_gold(existing.sell_value / 2)
+		grid.remove_tower(cell)
+		existing.queue_free()
+	# If cell is empty and not path, it's always valid (can_place_tower already checked path/bounds)
+
 	if tower_scene == null:
 		push_error("TowerPlacer: tower_scene failed to load")
 		cancel()
@@ -61,6 +73,7 @@ func try_place(cell: Vector2i) -> void:
 	tower.splash_radius    = cfg["splash"]
 	tower.projectile_speed = cfg["speed"]
 	tower.sell_value       = cfg["sell"]
+	tower.hand_rank        = pending_rank
 
 	get_tree().current_scene.add_child(tower)
 	tower.global_position = grid.cell_to_world(cell)
@@ -71,7 +84,7 @@ func try_place(cell: Vector2i) -> void:
 
 func cancel() -> void:
 	pending_rank = -1
-	is_placing = false
+	is_placing   = false
 	if grid:
 		grid.placement_mode = false
 		grid.set_hover(Vector2i(-1, -1))

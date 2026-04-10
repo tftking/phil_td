@@ -51,6 +51,7 @@ func _do_spawn(entry: Dictionary) -> void:
 	if entry.has("speed"):  e.move_speed  = entry["speed"]
 	if entry.has("reward"): e.gold_reward = entry["reward"]
 	if entry.has("color"):  e.enemy_color = entry["color"]
+	e.is_boss = entry.get("is_boss", false)
 	get_tree().current_scene.add_child(e)
 	e.init(world_path)
 	e.died.connect(_on_enemy_done)

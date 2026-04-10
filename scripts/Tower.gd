@@ -1,13 +1,14 @@
 extends Node2D
 
 var tower_label: String = "Tower"
-var damage: int = 10
-var fire_rate: float = 1.0
+var damage: int         = 10
+var fire_rate: float    = 1.0
 var range_radius: float = 120.0
-var tower_color: Color = Color(0.35, 0.60, 0.95)
+var tower_color: Color  = Color(0.35, 0.60, 0.95)
 var splash_radius: float = 0.0
 var projectile_speed: float = 220.0
-var sell_value: int = 20
+var sell_value: int     = 20
+var hand_rank: int      = 0   # CardHand.HandRank value — used for upgrade logic
 
 var target: Node2D = null
 var fire_timer: float = 0.0

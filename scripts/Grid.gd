@@ -46,8 +46,13 @@ func _draw() -> void:
 			if path_set.has(cell):
 				draw_rect(rect, Color(0.62, 0.48, 0.32))
 			elif placement_mode and hover_cell == cell:
-				var ok := can_place_tower(cell)
-				draw_rect(rect, Color(0.25, 0.65, 0.25, 0.85) if ok else Color(0.65, 0.22, 0.22, 0.85))
+				var has_tower := tower_slots.get(cell) != null
+				if has_tower:
+					draw_rect(rect, Color(0.82, 0.72, 0.08, 0.88))  # yellow = upgrade
+				elif is_valid_cell(cell) and not path_set.has(cell):
+					draw_rect(rect, Color(0.25, 0.65, 0.25, 0.85))  # green = place
+				else:
+					draw_rect(rect, Color(0.65, 0.22, 0.22, 0.85))  # red = invalid
 			else:
 				draw_rect(rect, Color(0.17, 0.36, 0.17))
 			draw_rect(rect, Color(0, 0, 0, 0.22), false, 1.0)
