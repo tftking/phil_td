@@ -137,12 +137,29 @@ func _generate_wave_fallback(wave_num: int) -> Array:
 func _input(event: InputEvent) -> void:
 	if GameManager.state == "over" or GameManager.state == "won": return
 
-	if event.is_action_pressed("ui_cancel"):
-		if tower_placer.is_placing:
-			tower_placer.cancel()
-		else:
-			_toggle_pause()
-		return
+	# Keyboard shortcuts
+	if event is InputEventKey and event.pressed and not event.echo:
+		match event.keycode:
+			KEY_SPACE:
+				var ch := card_hand
+				if ch and ch.selected.size() == 5:
+					ch.evaluate_selected()
+				return
+			KEY_D:
+				var ch := card_hand
+				if ch and ch.discards_remaining > 0 and ch.selected.size() > 0:
+					ch.discard_selected()
+				return
+			KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8:
+				var idx := event.keycode - KEY_1
+				card_hand.toggle_select(idx)
+				return
+			KEY_ESCAPE:
+				if tower_placer.is_placing:
+					tower_placer.cancel()
+				else:
+					_toggle_pause()
+				return
 
 	if _paused: return
 
@@ -180,9 +197,6 @@ func _input(event: InputEvent) -> void:
 				else:
 					hud.clear_tower_info()
 
-	if event.is_action_pressed("ui_cancel"):
-		tower_placer.cancel()
-
 func _toggle_pause() -> void:
 	_paused = not _paused
 	get_tree().paused = _paused
@@ -194,6 +208,7 @@ func _try_sell_tower(cell: Vector2i) -> void:
 	if _hovered_tower == tower: _hovered_tower = null
 	Audio.play_sell()
 	GameManager.add_gold(tower.sell_value)
+	GameManager.remove_tower()
 	grid.remove_tower(cell)
 	grid.flash_sell(cell)
 	tower.queue_free()

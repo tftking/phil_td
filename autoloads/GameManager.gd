@@ -11,6 +11,9 @@ signal boss_health_changed(hp: int, max_hp: int)
 signal boss_cleared()
 signal game_started()
 signal modifier_rolled(modifier: Dictionary)
+signal tower_count_changed(count: int)
+
+var tower_count: int = 0
 
 const WIN_WAVE: int = 30
 
@@ -106,12 +109,21 @@ func report_boss_health(hp: int, max_hp: int) -> void:
 func report_boss_cleared() -> void:
 	boss_cleared.emit()
 
+func add_tower() -> void:
+	tower_count += 1
+	tower_count_changed.emit(tower_count)
+
+func remove_tower() -> void:
+	tower_count = max(0, tower_count - 1)
+	tower_count_changed.emit(tower_count)
+
 func reset() -> void:
 	gold           = 100
 	lives          = DIFFICULTIES[difficulty].lives
 	wave_number    = 0
 	kills          = 0
 	wave_kills     = 0
+	tower_count    = 0
 	active_modifier = {}
 	state          = "idle"
 	Engine.time_scale = 1.0

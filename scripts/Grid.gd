@@ -89,10 +89,8 @@ func _draw() -> void:
 			Color(0.88, 0.78, 0.58, 0.65))
 
 	if world_path.size() > 0:
-		draw_circle(world_path[0],  10, Color(0.15, 0.82, 0.25))
-		draw_arc(world_path[0],     10, 0, TAU, 16, Color(0, 0, 0, 0.4), 1.5)
-		draw_circle(world_path[-1], 10, Color(0.88, 0.18, 0.18))
-		draw_arc(world_path[-1],    10, 0, TAU, 16, Color(0, 0, 0, 0.4), 1.5)
+		_draw_portal(world_path[0],  Color(0.15, 0.95, 0.30))
+		_draw_portal(world_path[-1], Color(0.95, 0.20, 0.20))
 
 	# Sell flash
 	if _sell_flash_timer > 0.0:
@@ -101,10 +99,25 @@ func _draw() -> void:
 			CELL_SIZE, CELL_SIZE)
 		draw_rect(fc, Color(0.25, 1.0, 0.4, t * 0.55))
 
+var _portal_angle: float = 0.0
+
 func _process(delta: float) -> void:
 	if _sell_flash_timer > 0.0:
 		_sell_flash_timer -= delta
 		queue_redraw()
+	_portal_angle += delta * 1.8
+	if world_path.size() > 0:
+		queue_redraw()
+
+func _draw_portal(center: Vector2, col: Color) -> void:
+	draw_circle(center, 14, col.darkened(0.55))
+	draw_arc(center, 14, 0, TAU, 24, col, 2.5)
+	# Rotating inner ring
+	var r2: float = 9.0
+	for i in 4:
+		var a := _portal_angle + (TAU / 4.0) * i
+		var p := center + Vector2(cos(a), sin(a)) * r2
+		draw_circle(p, 2.5, col.lightened(0.3))
 
 func flash_sell(cell: Vector2i) -> void:
 	_sell_flash_cell  = cell

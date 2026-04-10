@@ -20,7 +20,16 @@ func _ready() -> void:
 	_place_player  = _make_player()
 	_boss_player   = _make_player()
 
+var _shoot_cooldown: float = 0.0
+const SHOOT_MIN_INTERVAL: float = 0.08
+
+func _process(delta: float) -> void:
+	if _shoot_cooldown > 0.0:
+		_shoot_cooldown -= delta
+
 func play_shoot() -> void:
+	if _shoot_cooldown > 0.0: return
+	_shoot_cooldown = SHOOT_MIN_INTERVAL
 	_play_tone(_shoot_player, 880.0, 0.04, 0.06, 0.6)
 
 func play_hit() -> void:

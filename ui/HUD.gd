@@ -99,7 +99,9 @@ func _build_top_bar() -> void:
 	gold_label   = _lbl("Gold: 100",  Vector2(165, 9))
 	wave_label   = _lbl("Wave: 0",    Vector2(318, 9))
 	kills_label  = _lbl("Kills: 0",   Vector2(468, 9))
-	status_label = _lbl("",           Vector2(618, 9))
+	var tl := _lbl("Towers: 0", Vector2(590, 9))
+	tl.name = "TowersLabel"
+	status_label = _lbl("",           Vector2(720, 9))
 	status_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.25))
 	speed_btn = _btn("2x", Vector2(900, 3), Vector2(54, 30))
 	speed_btn.pressed.connect(_on_speed_toggle)
@@ -170,7 +172,7 @@ func _build_bottom_bar() -> void:
 	placing_label = _lbl("", Vector2(30, 528), 15)
 	placing_label.add_theme_color_override("font_color", Color(0.22, 1.0, 0.38))
 	placing_label.visible = false
-	_lbl("Yellow = upgrade  •  Right-click=sell  •  Middle-click=cycle target", Vector2(30, 556), 12).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
+	_lbl("Yellow=upgrade  •  Right-click=sell  •  Mid=cycle target  •  1-8 select cards  •  Space=play  •  D=discard", Vector2(30, 556), 11).add_theme_color_override("font_color", Color(0.38, 0.38, 0.38))
 	discard_count_label = _lbl("Discards: 3", Vector2(1040, 492))
 	play_btn = _btn("Play Hand", Vector2(1055, 518), Vector2(155, 44))
 	play_btn.pressed.connect(_on_play_pressed)
@@ -413,6 +415,9 @@ func _connect_gm_signals() -> void:
 	GameManager.wave_started.connect(func(w):
 		wave_label.text = "Wave: %d/%d" % [w, GameManager.WIN_WAVE])
 	GameManager.kill_registered.connect(func(): kills_label.text = "Kills: %d" % GameManager.kills)
+	GameManager.tower_count_changed.connect(func(c):
+		var tl := get_node_or_null("TowersLabel")
+		if tl: tl.text = "Towers: %d" % c)
 	GameManager.run_over.connect(_on_run_over)
 	GameManager.run_won.connect(func(): show_victory_screen())
 	GameManager.wave_cleared.connect(func(_w): status_label.text = "Wave cleared!")

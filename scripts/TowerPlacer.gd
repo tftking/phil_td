@@ -73,9 +73,12 @@ func try_place(cell: Vector2i) -> void:
 	var existing = grid.tower_slots.get(cell)
 	var upgrading: bool = existing != null and is_instance_valid(existing)
 
+	var old_priority: int = 0
 	if upgrading:
 		if pending_rank <= existing.hand_rank: return
+		old_priority = existing.targeting_priority
 		GameManager.add_gold(existing.sell_value / 2)
+		GameManager.remove_tower()
 		grid.remove_tower(cell)
 		existing.queue_free()
 
@@ -96,6 +99,8 @@ func try_place(cell: Vector2i) -> void:
 	tower.hand_rank        = pending_rank
 	tower.status_type      = cfg["status"]
 	tower.status_duration  = cfg["status_dur"]
+	if upgrading:
+		tower.targeting_priority = old_priority
 
 	# Apply suit bonus
 	if pending_suit >= 0:
@@ -107,6 +112,7 @@ func try_place(cell: Vector2i) -> void:
 	get_tree().current_scene.add_child(tower)
 	tower.global_position = grid.cell_to_world(cell)
 	grid.place_tower(cell, tower)
+	GameManager.add_tower()
 
 	cancel()
 	placement_done.emit()
