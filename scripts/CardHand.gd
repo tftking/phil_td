@@ -36,6 +36,9 @@ func _new_deck() -> void:
 			deck.append({"suit": suit, "rank": rank})
 	deck.shuffle()
 
+func deck_remaining() -> int:
+	return deck.size()
+
 func reset_for_wave() -> void:
 	discards_remaining = 3
 	draw_to_full()

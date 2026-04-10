@@ -25,8 +25,11 @@ func get_wave_summary(wave_data: Array) -> Dictionary:
 func _ready() -> void:
 	spawn_timer = Timer.new()
 	spawn_timer.one_shot = true
+	spawn_timer.process_callback = Timer.TIMER_PROCESS_PHYSICS
 	spawn_timer.timeout.connect(_on_spawn_timeout)
 	add_child(spawn_timer)
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	spawn_timer.process_mode = Node.PROCESS_MODE_ALWAYS
 
 func init(path: Array) -> void:
 	world_path = path

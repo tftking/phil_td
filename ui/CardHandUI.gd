@@ -65,6 +65,14 @@ func _ready() -> void:
 	history_label.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
 	add_child(history_label)
 
+	# Deck remaining label
+	var deck_lbl := Label.new()
+	deck_lbl.name = "DeckLabel"
+	deck_lbl.position = Vector2(1140, 490)
+	deck_lbl.add_theme_font_size_override("font_size", 13)
+	deck_lbl.add_theme_color_override("font_color", Color(0.52, 0.52, 0.52))
+	add_child(deck_lbl)
+
 	call_deferred("_connect_card_hand")
 
 func _connect_card_hand() -> void:
@@ -80,6 +88,9 @@ func _on_hand_updated(hand: Array) -> void:
 	if sel_lbl and ch:
 		var n := ch.selected.size()
 		sel_lbl.text = "%d / 5 selected" % n if n > 0 else ""
+	var deck_lbl: Label = get_node_or_null("DeckLabel")
+	if deck_lbl and ch:
+		deck_lbl.text = "Deck: %d" % ch.deck_remaining()
 
 func _on_hand_evaluated(rank: int, _cards: Array) -> void:
 	if rank > 0:

@@ -29,6 +29,7 @@ signal reached_base(enemy: Node2D)
 
 func _ready() -> void:
 	health = max_health
+	z_index = 2
 	add_to_group("enemies")
 
 func init(p: Array) -> void:
@@ -41,7 +42,8 @@ func init(p: Array) -> void:
 func _process(delta: float) -> void:
 	if path_index >= world_path.size():
 		reached_base.emit(self)
-		queue_free()
+		call_deferred("queue_free")
+		set_process(false)
 		return
 	# Status timers
 	if _slow_timer > 0.0:
@@ -82,18 +84,25 @@ func _move_step(delta: float) -> void:
 	else:
 		global_position += diff.normalized() * step
 
+var _float_cooldown: float = 0.0
+const FLOAT_MIN_INTERVAL: float = 0.12
+
 func take_damage(amount: int) -> void:
 	health = max(0, health - amount)
 	_flash_timer = FLASH_DUR
 	modulate     = Color(2.2, 0.25, 0.25)
 	queue_redraw()
-	var ft_scene := load("res://scenes/FloatText.tscn")
-	if ft_scene:
-		var ft = ft_scene.instantiate()
-		get_tree().current_scene.add_child(ft)
-		ft.global_position = global_position + Vector2(randf_range(-8, 8), -14)
-		var col := Color(1.0, 0.4, 0.4) if not is_boss else Color(1.0, 0.6, 0.0)
-		ft.init("-%d" % amount, col, 14 if not is_boss else 18)
+	# Throttle float text to avoid spam from rapid fire towers
+	_float_cooldown -= get_process_delta_time()
+	if _float_cooldown <= 0.0:
+		_float_cooldown = FLOAT_MIN_INTERVAL
+		var ft_scene := load("res://scenes/FloatText.tscn")
+		if ft_scene:
+			var ft = ft_scene.instantiate()
+			get_tree().current_scene.add_child(ft)
+			ft.global_position = global_position + Vector2(randf_range(-8, 8), -14)
+			var col := Color(1.0, 0.4, 0.4) if not is_boss else Color(1.0, 0.6, 0.0)
+			ft.init("-%d" % amount, col, 14 if not is_boss else 18)
 	Audio.play_hit()
 	if is_boss:
 		GameManager.report_boss_health(health, max_health)
@@ -111,12 +120,13 @@ func _die() -> void:
 	if is_boss:
 		GameManager.report_boss_cleared()
 		Audio.play_boss_dead()
-		var ft_scene := load("res://scenes/FloatText.tscn")
-		if ft_scene:
-			var ft = ft_scene.instantiate()
-			get_tree().current_scene.add_child(ft)
-			ft.global_position = global_position + Vector2(0, -28)
-			ft.init("+%d gold" % gold_reward, Color(1.0, 0.85, 0.22), 22)
+		if gold_reward > 0:
+			var ft_scene := load("res://scenes/FloatText.tscn")
+			if ft_scene:
+				var ft = ft_scene.instantiate()
+				get_tree().current_scene.add_child(ft)
+				ft.global_position = global_position + Vector2(0, -28)
+				ft.init("+%d gold" % gold_reward, Color(1.0, 0.85, 0.22), 22)
 	GameManager.add_gold(gold_reward)
 	GameManager.add_kill()
 	died.emit(self)

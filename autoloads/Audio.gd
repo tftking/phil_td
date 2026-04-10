@@ -111,3 +111,86 @@ func _play_arpeggio(player: AudioStreamPlayer, freqs: Array,
 		var env     := 1.0 - (local_t / note_dur)
 		var s       := sin(TAU * freqs[note_i] * t) * env * vol
 		pb.push_frame(Vector2(s, s))
+
+# ---------------------------------------------------------------------------
+# Background music — procedural looping bass + melody pattern
+# ---------------------------------------------------------------------------
+var _music_player: AudioStreamPlayer
+var _music_playing: bool = false
+const MUSIC_BPM: float   = 118.0
+const MUSIC_VOL: float   = -22.0
+
+# C minor pentatonic: C3 D#3 F3 G3 A#3 C4
+const BASS_NOTES: Array  = [130.81, 155.56, 174.61, 196.00, 233.08, 261.63]
+const MELODY_NOTES: Array = [261.63, 311.13, 349.23, 392.00, 466.16, 523.25, 392.00, 349.23]
+
+func start_music() -> void:
+	if _music_playing: return
+	_music_playing = true
+	_music_player  = _make_player()
+	_music_player.volume_db = MUSIC_VOL
+	_fill_music_buffer()
+	_music_player.finished.connect(_on_music_finished)
+	_music_player.play()
+
+func stop_music() -> void:
+	_music_playing = false
+	if is_instance_valid(_music_player):
+		_music_player.stop()
+
+func _on_music_finished() -> void:
+	if _music_playing:
+		_fill_music_buffer()
+		_music_player.play()
+
+func _fill_music_buffer() -> void:
+	var beat: float    = 60.0 / MUSIC_BPM
+	var bar: float     = beat * 4.0
+	var bars: int      = 4
+	var total: float   = bar * bars
+	var n_frames: int  = int(total * SAMPLE_RATE)
+
+	var stream := AudioStreamGenerator.new()
+	stream.mix_rate     = SAMPLE_RATE
+	stream.buffer_length = total + 0.1
+	_music_player.stream = stream
+	_music_player.play()
+
+	var pb := _music_player.get_stream_playback() as AudioStreamGeneratorPlayback
+	if pb == null: return
+
+	var available := pb.get_frames_available()
+	var to_fill   := mini(n_frames, available)
+
+	for i in to_fill:
+		var t    := float(i) / SAMPLE_RATE
+		var beat_pos := fmod(t, beat)
+		var bar_pos  := fmod(t, bar)
+		var sample   := 0.0
+
+		# Bass: root note on every beat, fifth on beat 3
+		var beat_idx := int(t / beat) % (bars * 4)
+		var bass_note: float
+		match beat_idx % 4:
+			0: bass_note = BASS_NOTES[0]
+			1: bass_note = BASS_NOTES[2]
+			2: bass_note = BASS_NOTES[4]
+			3: bass_note = BASS_NOTES[1]
+			_: bass_note = BASS_NOTES[0]
+		var bass_env := 1.0 - clampf(beat_pos / (beat * 0.85), 0.0, 1.0)
+		sample += sin(TAU * bass_note * t) * bass_env * 0.30
+
+		# Melody: 8th note pattern cycling through pentatonic
+		var eighth := beat * 0.5
+		var mel_idx := int(t / eighth) % MELODY_NOTES.size()
+		var mel_pos := fmod(t, eighth)
+		var mel_env := 1.0 - clampf(mel_pos / (eighth * 0.75), 0.0, 1.0)
+		if int(t / eighth) % 3 != 1:  # rest on every 3rd eighth
+			sample += sin(TAU * MELODY_NOTES[mel_idx] * t) * mel_env * 0.12
+
+		# Hi-hat click on every half-beat
+		var hat_pos := fmod(t, beat * 0.5)
+		if hat_pos < 0.018:
+			sample += randf_range(-1.0, 1.0) * (1.0 - hat_pos / 0.018) * 0.08
+
+		pb.push_frame(Vector2(sample, sample))

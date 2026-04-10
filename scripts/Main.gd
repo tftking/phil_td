@@ -31,6 +31,7 @@ func _ready() -> void:
 	card_hand.hand_evaluated.connect(_on_hand_evaluated_main)
 	card_hand.reset_for_wave()
 	await GameManager.game_started
+	Audio.start_music()
 	grid.rebuild_for_map(GameManager.selected_map)
 	wave_manager.init(grid.world_path)
 	await get_tree().create_timer(0.35).timeout
@@ -71,7 +72,7 @@ func _on_wave_ready(wave_data: Array) -> void:
 	wave_manager.start_wave(data)
 
 func _on_hand_evaluated_main(rank: int, _cards: Array) -> void:
-	if rank == 0:
+	if rank == 0 and GameManager.state == "wave":
 		GameManager.apply_high_card_penalty()
 		hud.show_penalty_popup()
 
@@ -84,9 +85,10 @@ func _on_wave_cleared(wave_num: int) -> void:
 		_start_next_wave()
 
 func _on_run_over() -> void:
-	pass
+	Audio.stop_music()
 
 func _on_run_won() -> void:
+	Audio.stop_music()
 	hud.show_victory_screen()
 
 func _on_boss_cleared() -> void:
@@ -200,6 +202,10 @@ func _input(event: InputEvent) -> void:
 func _toggle_pause() -> void:
 	_paused = not _paused
 	get_tree().paused = _paused
+	if _paused:
+		Audio.stop_music()
+	else:
+		Audio.start_music()
 	hud.show_pause_screen(_paused)
 
 func _try_sell_tower(cell: Vector2i) -> void:
