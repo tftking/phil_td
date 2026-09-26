@@ -1,0 +1,38 @@
+{
+  "$comment": "The Felt, single-lane layout for M1. Coordinates are tile centers (x right, y down). Multi-lane radial layout lands in M2.",
+  "id": "felt",
+  "name": "The Felt",
+  "players": [1, 1],
+  "width": 16,
+  "height": 10,
+  "paths": [
+    {
+      "id": "ground",
+      "points": [
+        [0, 1],
+        [12, 1],
+        [12, 4],
+        [3, 4],
+        [3, 7],
+        [15, 7]
+      ]
+    },
+    {
+      "id": "air",
+      "air": true,
+      "points": [
+        [0, 1],
+        [15, 7]
+      ]
+    }
+  ],
+  "buildAreas": [
+    [4, 2, 8, 2],
+    [4, 5, 8, 2]
+  ],
+  "hotTiles": [
+    { "x": 7, "y": 3, "bonus": "range", "amount": 0.1 },
+    { "x": 8, "y": 5, "bonus": "damage", "amount": 0.1 }
+  ],
+  "vault": [15, 7]
+}

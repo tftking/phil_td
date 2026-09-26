@@ -3,13 +3,13 @@
 ## 1. Vision
 
 In **Poker TD**, poker is the build system of a tower defense game. You don't
-buy towers from a menu. You buy *chances*: gold becomes cards, and cards
+buy towers from a menu. You buy _chances_: gold becomes cards, and cards
 become towers. The tension of a poker table (do I redraw for the flush, or
 lock the safe pair?) runs alongside the pressure of a wave closing in on your
 defenses.
 
 It's a standalone, online-first multiplayer game that keeps what made the
-StarCraft *Poker Defense* maps loved: lane defense, random hands deciding
+StarCraft _Poker Defense_ maps loved: lane defense, random hands deciding
 towers, co-op chaos, and friends cheering a lucky royal flush. It adds real
 netcode, reconnects, balance built on data, and modern UX.
 
@@ -59,11 +59,12 @@ netcode, reconnects, balance built on data, and modern UX.
 - **Match loop (~40 waves):** build an engine: suit research, card shop tweaks
   to your deck, and a composition of tower families that fits the enemy mix.
 - **Meta loop (across matches):** cosmetics, card backs, table themes, stats,
-  unlockable *House Rules* (mutators) and *Jokers*. No pay-to-win power.
+  unlockable _House Rules_ (mutators) and _Jokers_. No pay-to-win power.
 
 ## 4. Game modes
 
 ### 4.1 Co-op Defense (flagship)
+
 - 1–6 players, and each player owns one **lane**.
 - Every lane runs the same wave schedule. Creeps that get through a lane
   enter the **Center Table**, a shared loop road around the Vault.
@@ -81,23 +82,26 @@ netcode, reconnects, balance built on data, and modern UX.
 - Win: survive wave 40 (the final boss). **Endless** unlocks after the first win.
 
 ### 4.2 Showdown (versus)
+
 - 2–8 players FFA, or 2v2 / 3v3 / 4v4 teams, each in an identical lane.
 - **Raise:** spend gold to queue extra creeps into an opponent's (or the next
   opponent's) lane for the next wave. Raising **permanently increases your
   income** (Legion TD style), so it's both an investment and an attack.
-- **Bluff:** opponents see *how much* was raised against them (chip stack
-  size) but not *what* until the wave spawns.
+- **Bluff:** opponents see _how much_ was raised against them (chip stack
+  size) but not _what_ until the wave spawns.
 - Leaks cost your own lives. At 0 lives you **bust** and are out of the game.
-  Busted players can spectate or sit in as a *Dealer's Ghost*, who can place
+  Busted players can spectate or sit in as a _Dealer's Ghost_, who can place
   1 cosmetic ping per wave.
 - Last player (or team) standing wins. After wave 25 there is **Sudden Death**:
   creep HP increases 10% per wave.
 
 ### 4.3 Solo / Practice
+
 - Co-op with 1 player and optional bot allies (the same bots used for balance testing).
 - **Daily Deal:** a fixed seed and fixed deck order for everyone that day, with a leaderboard.
 
 ### 4.4 Later / experimental (post-launch)
+
 - **Hold'em:** each player holds 2 hole cards per deal. Community cards
   (flop/turn/river) are revealed on a timer and are shared by the whole
   table. Your tower is the best 5 of 7.
@@ -107,14 +111,15 @@ netcode, reconnects, balance built on data, and modern UX.
 
 ## 5. Maps
 
-| Map | Players | Notes |
-|-----|---------|-------|
-| **The Felt** | 1–6 | Radial table: lanes spiral inward to the Center Table. Default. |
-| **Riverboat** | 2–4 | Long lanes with a shared river crossing mid-lane where lanes interleave. |
-| **Vegas Strip** | 2–8 versus | Parallel straight lanes, easy to read for Showdown. |
-| **Back Room** | 1–3 | Small and tight with few build tiles, for expert players. |
+| Map             | Players    | Notes                                                                    |
+| --------------- | ---------- | ------------------------------------------------------------------------ |
+| **The Felt**    | 1–6        | Radial table: lanes spiral inward to the Center Table. Default.          |
+| **Riverboat**   | 2–4        | Long lanes with a shared river crossing mid-lane where lanes interleave. |
+| **Vegas Strip** | 2–8 versus | Parallel straight lanes, easy to read for Showdown.                      |
+| **Back Room**   | 1–3        | Small and tight with few build tiles, for expert players.                |
 
 Map rules:
+
 - Grid-based. The path is fixed and never mazed (this matches the original and
   keeps it readable). Build tiles sit next to the path.
 - About 28 build tiles per lane, so tiles are a real constraint by the late game,
@@ -126,7 +131,7 @@ Map rules:
 
 - **Account level** from matches played, waves survived, and big hands made.
 - **Unlocks (sidegrades or cosmetic only):** card backs, table felt, tower
-  skins, VFX colors, emotes, the *House Rules* catalog, and extra starting
+  skins, VFX colors, emotes, the _House Rules_ catalog, and extra starting
   Jokers for custom lobbies.
 - **Collection / Hand Book:** track the first time you make each hand and suit
   combo. Royal flushes are logged with match, date and wave.

@@ -1,0 +1,157 @@
+:root {
+  --felt: #0f3d2e;
+  --felt-dark: #0a2a20;
+  --ink: #f3efe4;
+  --muted: #a9b8b0;
+  --gold: #e8c15a;
+  --red: #d8454b;
+  --card: #fbf8f1;
+  --card-ink: #1b1b1b;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  color: var(--ink);
+  background: var(--felt-dark);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--felt-dark);
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+#board {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+#board canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+#ui {
+  padding: 12px 16px 16px;
+  background: linear-gradient(to top, #061a13, var(--felt-dark));
+  border-top: 1px solid #1d4d3b;
+}
+
+.hand-panel {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.cards {
+  display: flex;
+  gap: 8px;
+}
+
+.card {
+  width: 64px;
+  height: 90px;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--card-ink);
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s;
+  user-select: none;
+}
+
+.card.red {
+  color: var(--red);
+}
+
+.card.scoring {
+  border-color: var(--gold);
+}
+
+.card.marked {
+  transform: translateY(8px);
+  opacity: 0.55;
+}
+
+.card.empty {
+  background: transparent;
+  border: 2px dashed #2c5c4a;
+  cursor: default;
+}
+
+.info {
+  min-width: 220px;
+}
+
+.info h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.info .sub {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.odds {
+  color: var(--gold);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #3b7a61;
+  background: #164a37;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button kbd {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.deck {
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.deck .suits span {
+  margin-right: 10px;
+}

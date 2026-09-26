@@ -1,0 +1,91 @@
+{
+  "$comment": "Creep archetypes, docs/MECHANICS.md §5. Multipliers apply to the per-wave base formulas in waves.json.",
+  "enemies": [
+    {
+      "id": "grunt",
+      "name": "Grunt",
+      "hp": 1.0,
+      "speed": 1.0,
+      "armor": 1.0,
+      "count": 1.0,
+      "leak": 1
+    },
+    {
+      "id": "runner",
+      "name": "Runner",
+      "hp": 0.6,
+      "speed": 1.8,
+      "armor": 0.5,
+      "count": 1.2,
+      "leak": 1
+    },
+    {
+      "id": "brute",
+      "name": "Brute",
+      "hp": 2.5,
+      "speed": 0.7,
+      "armor": 2.0,
+      "count": 0.5,
+      "leak": 2
+    },
+    {
+      "id": "swarm",
+      "name": "Swarm",
+      "hp": 0.25,
+      "speed": 1.2,
+      "armor": 0,
+      "count": 4.0,
+      "leak": 1
+    },
+    {
+      "id": "flyer",
+      "name": "Flyer",
+      "hp": 0.8,
+      "speed": 1.1,
+      "armor": 0.5,
+      "count": 1.0,
+      "leak": 1,
+      "flying": true
+    },
+    {
+      "id": "regen",
+      "name": "Regen",
+      "hp": 1.2,
+      "speed": 0.9,
+      "armor": 1.0,
+      "count": 0.8,
+      "leak": 1,
+      "regenPerSecond": 0.02
+    },
+    {
+      "id": "shield",
+      "name": "Shield",
+      "hp": 1.0,
+      "speed": 1.0,
+      "armor": 0,
+      "count": 0.8,
+      "leak": 1,
+      "shield": 0.3
+    },
+    {
+      "id": "splitter",
+      "name": "Splitter",
+      "hp": 1.5,
+      "speed": 0.9,
+      "armor": 1.0,
+      "count": 0.6,
+      "leak": 2,
+      "splitInto": { "enemy": "swarm", "count": 3 }
+    },
+    {
+      "id": "boss",
+      "name": "Boss",
+      "hp": 40,
+      "speed": 0.6,
+      "armor": 3.0,
+      "count": 1,
+      "leak": 10,
+      "boss": true
+    }
+  ]
+}
