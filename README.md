@@ -1,62 +1,39 @@
-# Poker TD
+# Poker TD (working title)
 
-A tower defense game where poker hands determine what towers you place.
+A standalone, online multiplayer tower defense game inspired by the classic
+**Poker Defense / PokerTD** StarCraft custom maps. You pay gold to be dealt
+poker hands, and the hand you make decides which tower you get. You defend
+your lane with your team, or you "raise" against rivals by sending creeps into
+their lanes.
 
-## How to open
+> Status: **design phase**. This repo currently holds the design docs only.
+> The earlier single-player Godot prototype is in git history (commit `3af8b17`)
+> and is kept for reference.
 
-1. Install Godot 4.2+
-2. Open Godot, click "Import"
-3. Navigate to this folder and select `project.godot`
-4. Hit Play (F5)
+## Design docs
 
-No assets needed — everything is drawn in code.
+| Doc | What it covers |
+|-----|----------------|
+| [Game Design](docs/GAME_DESIGN.md) | Vision, pillars, core loop, game modes, maps, progression, UX |
+| [Mechanics & Balance](docs/MECHANICS.md) | Cards, hands to towers, suits, upgrades, enemies, waves, economy formulas |
+| [Technical Design](docs/TECHNICAL_DESIGN.md) | Stack, architecture, netcode, protocol, data model, testing |
+| [Roadmap](docs/ROADMAP.md) | Milestones M0 to M6 with scope and exit criteria |
 
-## How to play
+## The pitch in 30 seconds
 
-- A wave starts automatically
-- You hold 8 cards at the bottom of the screen
-- **Click cards** to select up to 5
-- The hand rank previews in the bottom-left (e.g. "Flush")
-- Click **Play Hand** to evaluate
-- If rank > High Card, your cursor enters placement mode
-- **Click a green cell** on the grid to place the tower
-- **Right-click** or **ESC** to cancel placement
-- Click **Discard** to swap selected cards (3 discards per wave)
-- Survive as many waves as you can
+1. A wave timer counts down. Enemies walk your lane toward the Vault.
+2. You spend **50 gold** to be **dealt 5 cards** from your personal deck.
+3. You get **redraws** to chase a better hand. It's your deck, so card counting pays off.
+4. You **lock** the hand: *Pair* gives a Twin tower, *Flush* gives an Elemental,
+   *Four of a Kind* gives a Laser. **Card ranks** set the tower's power and the
+   **dominant suit** sets its elemental effect.
+5. You place the tower, research suits, and buy deck tweaks in the Card Shop.
+6. In **co-op**, up to 6 players hold their own lanes and then share a center
+   table and a single life pool. In **Showdown** (versus), you raise gold to
+   send hidden creeps at opponents. The last player standing wins.
 
-## Hand → Tower mapping
+## Planned tech (see Technical Design)
 
-| Hand            | Tower   | Notes                        |
-|-----------------|---------|------------------------------|
-| High card       | —       | No placement                 |
-| Pair            | Archer  | Balanced starter             |
-| Two pair        | Double  | Faster fire rate             |
-| Three of a kind | Sniper  | Long range, high damage      |
-| Straight        | Rapid   | Very fast, short range       |
-| Flush           | Splash  | AoE damage                   |
-| Full house      | Mortar  | Large AoE, slow              |
-| Four of a kind  | Laser   | High single-target DPS       |
-| Straight flush  | Storm   | Fast + AoE                   |
-| Royal flush     | Nuke    | Massive AoE, game-changer    |
-
-## Architecture
-
-```
-autoloads/GameManager.gd    — gold, lives, wave state, signals
-scripts/Grid.gd             — draws map, owns path + tower slots
-scripts/Enemy.gd            — walks world-space path, draws self
-scripts/Tower.gd            — targets enemies, fires projectiles
-scripts/Projectile.gd       — homes to target, deals damage
-scripts/CardHand.gd         — 52-card deck, draw/discard, evaluation
-scripts/WaveManager.gd      — spawns enemies with delay
-scripts/TowerPlacer.gd      — placement mode after hand is played
-scripts/Main.gd             — wires everything together
-ui/HUD.gd                   — top bar + bottom controls
-ui/CardHandUI.gd            — draws the 8 card slots
-```
-
-## Gemini integration hook
-
-Replace `_generate_wave()` in `Main.gd` with an HTTP request to Gemini.
-Pass current wave number + player stats, receive JSON wave config array.
-`AIManager` autoload is the right place for the API call.
+TypeScript monorepo. It has a pure deterministic simulation package shared by
+an authoritative Node server and a PixiJS browser client, and can later be
+wrapped for desktop/Steam.
