@@ -1,0 +1,16 @@
+{
+  "name": "@pokertd/desktop",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Desktop build (Tauri) wrapping the web client.",
+  "scripts": {
+    "tauri": "tauri",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "icons": "tauri icon icon-source.png"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.0"
+  }
+}

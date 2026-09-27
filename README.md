@@ -1,66 +1,88 @@
-# Poker TD (working title)
+# Poker TD
 
 A standalone, online multiplayer tower defense game inspired by the classic
 **Poker Defense / PokerTD** StarCraft custom maps. You pay gold to be dealt
-poker hands, and the hand you make decides which tower you get. You defend
-your lane with your team, or you "raise" against rivals by sending creeps into
-their lanes.
+poker hands, and the hand you make decides which tower you get. Hold your lane
+with friends in co-op, or raise gold against rivals in Showdown.
 
-> Status: **M0 (foundations) done**. Next up is M1, the offline vertical slice
-> ([Roadmap](docs/ROADMAP.md)). The earlier single-player Godot prototype is in
-> git history (commit `3af8b17`) for reference.
+**Status:** playable end to end, in the browser and as a desktop app. Solo with
+bot allies, online co-op (1–6), Showdown (2–8), Quick Play, the Daily Deal,
+replays and a tutorial. What's left needs people: playtests, a public
+deployment, and commissioned art and music. See the [Roadmap](docs/ROADMAP.md).
 
-## Design docs
+## Play it locally
 
-| Doc                                          | What it covers                                                            |
-| -------------------------------------------- | ------------------------------------------------------------------------- |
-| [Game Design](docs/GAME_DESIGN.md)           | Vision, pillars, core loop, game modes, maps, progression, UX             |
-| [Mechanics & Balance](docs/MECHANICS.md)     | Cards, hands to towers, suits, upgrades, enemies, waves, economy formulas |
-| [Technical Design](docs/TECHNICAL_DESIGN.md) | Stack, architecture, netcode, protocol, data model, testing               |
-| [Roadmap](docs/ROADMAP.md)                   | Milestones M0 to M6 with scope and exit criteria                          |
-
-## The pitch in 30 seconds
-
-1. A wave timer counts down. Enemies walk your lane toward the Vault.
-2. You spend **50 gold** to be **dealt 5 cards** from your personal deck.
-3. You get **redraws** to chase a better hand. It's your deck, so card counting pays off.
-4. You **lock** the hand: _Pair_ gives a Twin tower, _Flush_ gives an Elemental,
-   _Four of a Kind_ gives a Laser. **Card ranks** set the tower's power and the
-   **dominant suit** sets its elemental effect.
-5. You place the tower, research suits, and buy deck tweaks in the Card Shop.
-6. In **co-op**, up to 6 players hold their own lanes and then share a center
-   table and a single life pool. In **Showdown** (versus), you raise gold to
-   send hidden creeps at opponents. The last player standing wins.
-
-## Getting started
-
-Requires Node 22.12+ and pnpm 10 (`corepack enable` sets it up).
+Requires Node 22.12+ and pnpm 10 (`corepack enable`).
 
 ```sh
 pnpm install
-pnpm dev            # client on http://localhost:5173, server on :8787
-pnpm check          # lint, format check, typecheck, tests
-pnpm odds "AH KH 7H 2C 9H" --redraw 2C   # redraw odds for a hand
+pnpm start          # builds the client and serves everything on http://localhost:8787
 ```
 
-In the client, press `D` to deal, `1`–`5` to mark cards, `R` to redraw and
-`Space` to lock.
+Or for development with hot reload:
 
-## Layout
+```sh
+pnpm dev            # client on http://localhost:5173 (proxies to the server on :8787)
+```
+
+Share a room with friends on your network: create a room and send the invite link (`/play/CODE`).
+
+### Controls
+
+| Key                | Action                                                  |
+| ------------------ | ------------------------------------------------------- |
+| `D`                | Deal (50 gold)                                          |
+| `1`–`5`            | Mark cards for a redraw                                 |
+| `R`                | Redraw marked cards                                     |
+| `Space`            | Lock the hand; the tower goes to your bench             |
+| Click              | Place a tower / select a tower                          |
+| Right-click, `Esc` | Cancel                                                  |
+| `U` / `S` / `T`    | Upgrade / sell / change targeting of the selected tower |
+| `Q`                | Research your main suit                                 |
+| `Tab` (hold)       | Scoreboard                                              |
+| `H`                | Hand rankings                                           |
+| `F`                | Zoom to your lane; wheel zooms, drag pans               |
+| `P`                | Vote to pause (co-op)                                   |
+| `N`                | Send the next wave early (solo)                         |
+
+All keys can be rebound in Settings.
+
+## Docs
+
+| Doc                                          | What it covers                                                   |
+| -------------------------------------------- | ---------------------------------------------------------------- |
+| [Game Design](docs/GAME_DESIGN.md)           | Vision, pillars, core loop, modes, maps, progression, UX         |
+| [Mechanics & Balance](docs/MECHANICS.md)     | Cards, hands to towers, suits, upgrades, enemies, waves, economy |
+| [Balance report](docs/BALANCE.md)            | Bot-measured win rates, guardrails, and what changed             |
+| [Technical Design](docs/TECHNICAL_DESIGN.md) | Architecture, simulation, netcode, protocol, testing (as built)  |
+| [Deploying](docs/DEPLOY.md)                  | Docker, configuration, endpoints, capacity, backups              |
+| [Roadmap](docs/ROADMAP.md)                   | Milestones, what's done, and what still needs people             |
+
+## Repository
 
 ```
-packages/sim        deterministic game rules: cards, hand evaluator, RNG, data, formulas
-packages/sim/data   tuning data: towers, enemies, waves, rules, maps (JSON)
+packages/sim        deterministic game rules: cards, evaluator, waves, combat, views, replays
+packages/sim/data   tuning data: towers, enemies, waves, rules, sends, maps (JSON)
 packages/protocol   client/server messages (zod-validated, msgpack on the wire)
-apps/server         Node WebSocket server: rooms and lobbies (match loop in M2)
-apps/client         Vite + PixiJS + Preact browser client
+packages/bots       greedy / smart / raiser bots and a headless match runner
+apps/server         Node server: rooms, match loop, profiles (SQLite), quick play, replays
+apps/client         Vite + PixiJS + Preact browser client (also runs offline modes)
+apps/desktop        Tauri desktop wrapper
+tools/              balance runner, load test, end-to-end browser test
 ```
 
-The sim must stay deterministic. ESLint blocks `Math.random`, `Date` and timers in
-`packages/sim/src`, so all randomness goes through `Rng.stream(seed, ...)`.
+## Commands
 
-## Tech
+| Command                                  | What                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| `pnpm check`                             | Lint, format check, typecheck, unit/integration tests               |
+| `pnpm e2e`                               | Real server + Chromium end-to-end test                              |
+| `pnpm balance --runs 60 --check`         | Bot balance run with guardrails (see [BALANCE.md](docs/BALANCE.md)) |
+| `pnpm loadtest --rooms 100`              | Server load test                                                    |
+| `pnpm odds "AH KH 7H 2C 9H" --redraw 2C` | Exact redraw odds for a hand                                        |
+| `docker build -t pokertd .`              | Production image (see [DEPLOY.md](docs/DEPLOY.md))                  |
 
-TypeScript monorepo. A pure deterministic simulation package is shared by an
-authoritative Node server and a PixiJS browser client, and can later be wrapped
-for desktop/Steam. See [Technical Design](docs/TECHNICAL_DESIGN.md).
+The simulation must stay deterministic. ESLint blocks `Math.random`, `Date` and
+timers in `packages/sim/src`, so all randomness goes through seeded RNG streams.
+
+The earlier single-player Godot prototype is in git history (commit `3af8b17`).

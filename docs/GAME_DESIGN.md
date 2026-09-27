@@ -67,19 +67,21 @@ netcode, reconnects, balance built on data, and modern UX.
 
 - 1–6 players, and each player owns one **lane**.
 - Every lane runs the same wave schedule. Creeps that get through a lane
-  enter the **Center Table**, a shared loop road around the Vault.
+  enter the **Center Table**, a shared road that leads to the Vault.
 - Every player may build on the **Center Table slots** (limited, first come
   first served, max 3 per player). Those towers are the team's second chance.
-- Creeps that reach the Vault drain the **shared team life pool** (20 + 5 per player).
-- Bosses spawn **directly on the Center Table** every 10 waves, so the whole
-  team focuses fire.
+- Creeps that reach the Vault drain the **shared team life pool** (15 + 10 per player on Standard).
+- Bosses spawn in **every lane** every 10 waves. Whatever gets through meets the
+  Center Table, so the team's shared towers matter most on boss waves.
+  (Originally bosses spawned only on the Center Table; bot tests showed the
+  center towers alone couldn't kill them.)
 - Co-op tools:
   - **Slip:** once per wave, pass one card from your current (unlocked) hand
     to a teammate. It replaces a card of their choice on their next redraw.
   - **The Pot:** anyone can chip gold into a team pot. When it fills, every
     player draws a **River Card**: a free extra card on the next deal, so they pick the best 5 of 6.
-  - **Pings:** lane help request, "going for flush", and "saving gold" markers.
-- Win: survive wave 40 (the final boss). **Endless** unlocks after the first win.
+  - **Pings:** help, going for a flush, saving gold, and danger markers.
+- Win: survive wave 40 (the final boss). **Endless** is a room option that keeps going after wave 40.
 
 ### 4.2 Showdown (versus)
 
@@ -111,19 +113,19 @@ netcode, reconnects, balance built on data, and modern UX.
 
 ## 5. Maps
 
-| Map             | Players    | Notes                                                                    |
-| --------------- | ---------- | ------------------------------------------------------------------------ |
-| **The Felt**    | 1–6        | Radial table: lanes spiral inward to the Center Table. Default.          |
-| **Riverboat**   | 2–4        | Long lanes with a shared river crossing mid-lane where lanes interleave. |
-| **Vegas Strip** | 2–8 versus | Parallel straight lanes, easy to read for Showdown.                      |
-| **Back Room**   | 1–3        | Small and tight with few build tiles, for expert players.                |
+| Map             | Players    | Notes                                                     |
+| --------------- | ---------- | --------------------------------------------------------- |
+| **The Felt**    | 1–6        | Lanes on both sides of the Center Table road. Default.    |
+| **Riverboat**   | 1–4        | Long winding lanes.                                       |
+| **Vegas Strip** | 2–8 versus | Parallel straight lanes, easy to read for Showdown.       |
+| **Back Room**   | 1–3        | Small and tight with few build tiles, for expert players. |
 
 Map rules:
 
 - Grid-based. The path is fixed and never mazed (this matches the original and
   keeps it readable). Build tiles sit next to the path.
-- About 28 build tiles per lane, so tiles are a real constraint by the late game,
-  and selling and replacing weak towers becomes a decision.
+- 24–37 build tiles per lane (32 on The Felt), so tiles are a real constraint
+  by the late game, and selling and replacing weak towers becomes a decision.
 - Some **Hot Tiles** give a small bonus (+10% range or +10% damage), which gives
   placement some depth.
 

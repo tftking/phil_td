@@ -86,6 +86,20 @@ describe('http', () => {
   });
 });
 
+describe('client error reports', () => {
+  it('accepts and rate-limits reports', async () => {
+    const post = () =>
+      fetch(`http://${base()}/client-errors`, {
+        method: 'POST',
+        body: JSON.stringify({ message: 'boom' }),
+      });
+    expect((await post()).status).toBe(204);
+    const statuses = [];
+    for (let i = 0; i < 12; i++) statuses.push((await post()).status);
+    expect(statuses).toContain(429);
+  });
+});
+
 describe('profiles', () => {
   it('creates a guest profile and logs back in with its token', async () => {
     const a = await connect('Alex');

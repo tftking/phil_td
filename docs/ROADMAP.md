@@ -1,123 +1,134 @@
 # Roadmap
 
-Milestones are ordered by **risk**. The first goal is proving that the
-card-to-tower loop is fun offline. Only then do we pay for netcode, and only
-after that do we build content and meta. Sizes assume a solo developer part
-time, using S (about 1 week), M (2–3 weeks) and L (4–6 weeks). Each milestone
-has **exit criteria**, and we don't move on until they're met.
+Milestones are ordered by **risk**: prove the card-to-tower loop offline, then
+pay for netcode, then content and meta. Each milestone has **exit criteria**.
 
 ```
 M0 Foundations ─► M1 Offline slice ─► M2 Online co-op ─► M3 Content ─► M4 Showdown ─► M5 Online platform ─► M6 Launch
-     S                 M                    M               L              M                  M                  L
 ```
+
+## Status at a glance
+
+Everything that can be built and verified by code and automated tests is done.
+What remains needs **people, accounts or artists**: playtests, a public
+deployment, OAuth and Steam accounts, commissioned art and music, and business
+decisions.
+
+| Milestone            |            Built            | Automated checks                                  | Needs people / accounts                                  |
+| -------------------- | :-------------------------: | ------------------------------------------------- | -------------------------------------------------------- |
+| M0 Foundations       |             ✅              | CI, exhaustive evaluator test                     | —                                                        |
+| M1 Offline slice     |             ✅              | Bot guardrails pass                               | External playtests                                       |
+| M2 Online co-op      |             ✅              | Server tests, 2-browser e2e, load test            | Public deploy with TLS; 4 players on real networks       |
+| M3 Content           |             ✅              | Guardrails on all maps and difficulties           | Playtest win rates                                       |
+| M4 Showdown          |             ✅              | 8-player FFA sims, raise-style spread < 10 points | Human Showdown sessions                                  |
+| M5 Online platform   | ✅ (guest accounts, SQLite) | Server tests                                      | OAuth apps, beta week, retention data, monetization call |
+| M6 Polish and launch |         ✅ in code          | e2e, phone layout                                 | Art/audio commission, Steam page, trailer                |
+
+Legend below: `[x]` done, `[~]` done differently than planned (see note), `[ ]` open.
 
 ---
 
-## M0: Foundations (S): done
+## M0: Foundations — done
 
 - [x] pnpm monorepo: `packages/sim`, `packages/protocol`, `apps/client`, `apps/server`
 - [x] TS strict, ESLint + Prettier, Vitest, GitHub Actions CI (lint, typecheck, test)
 - [x] Seeded RNG with streams, fixed-tick loop, state hash util
 - [x] Card model, deck (draw/discard/reshuffle), **hand evaluator** with exhaustive test
 - [x] Odds tool CLI (`pnpm odds "AH KH 7H 2C 9H" --redraw 2C`)
-- [x] Data loading for `towers.json`, `enemies.json`, `waves.json`, and `maps/felt.json`
+- [x] Data loading for towers, enemies, waves, rules and maps
 
-**Exit:** CI green. The evaluator matches known 5-card frequencies exactly. The same seed gives the same deal sequence.
+**Exit:** met. The evaluator matches all 2,598,960 five-card hands; same seed, same deals.
 
-Also delivered: `rules.json` (economy, cards, research, shop, difficulty), map
-geometry, the documented formulas, a lint rule that blocks `Math.random`/`Date` in
-the sim, a lobby-only WebSocket server, and a client that draws The Felt and
-runs the deal/redraw/lock flow against the real sim.
+## M1: Offline vertical slice — built
 
-## M1: Offline vertical slice (M)
+- [x] Map "The Felt", path rendering, build tiles, the Vault
+- [x] Deal → redraw → lock → place flow, hand UI, live hand preview, deck tracker, redraw odds
+- [x] Towers (all 11, not just 6), creeps (all 9), 40 waves with bosses
+- [x] Card power (rank) and suit affinity; suit effects for ♠♥♦♣
+- [x] Tower levels, sell, targeting modes
+- [x] Economy: bounty, wave bonus, interest
+- [x] VFX/SFX: projectiles, lightning, beams, splash, death bursts, big-hand banner, synthesized audio
+- [x] `pnpm balance` with greedy and smart bots, and balance reports
+- [~] The offline sim runs on the main thread, not a Web Worker: a whole 6-player
+  match costs well under a millisecond per tick, so a worker wasn't worth the complexity.
 
-The goal is to find the fun. The sim runs in a Web Worker in the browser, with no server.
+**Exit:** guardrails met (greedy bot clears wave 15 in 100% of runs and never wins).
+**Open:** 5+ external playtesters and the "one more run" signal. The kill/pivot
+checkpoint still applies to those playtests.
 
-- [ ] Map "The Felt" (1 lane), path rendering, build tiles, the Vault
-- [ ] Deal → redraw → lock → place flow, with hand UI, live hand preview and deck tracker
-- [ ] Towers: Plinker, Twin, Sentry, Sniper, Chain, Mortar (6 of 11)
-- [ ] Creeps: Grunt, Runner, Brute, Flyer. Waves 1–15 with a boss at w10
-- [ ] Card power (rank) and suit affinity. Suit effects for ♠♥♦♣
-- [ ] Tower levels, sell, targeting modes
-- [ ] Economy: bounty, wave bonus, interest
-- [ ] Basic VFX/SFX: hits, deaths, a big-hand banner
-- [ ] `tools/balance` with a **greedy bot**, and a first balance report
+## M2: Online co-op — built
 
-**Exit:** 5 or more external playtesters play 15 waves, and most want "one more run".
-The median playtest has at least 3 "redraw or lock?" decisions per wave.
-Balance guardrails for w1–15 pass.
+- [x] Node room server, `ws` transport, msgpack plus zod-validated intents
+- [x] Lobby codes, join by URL (`/play/CODE`), ready-up, host settings
+- [x] 10 Hz snapshots with tower deltas and slow-changing detail every 2 s, client interpolation, private hands
+- [x] Multi-lane maps with the **Center Table** and shared lives
+- [x] Reconnect with a seat token and full resync; bot takeover after the grace period
+- [x] Pings and chat
+- [x] Offline mode speaks the same protocol in the browser (single UI code path)
+- [x] Deployable: Dockerfile (tested: builds, serves, health check, persistent volume)
+- [ ] Deployed to a public host with TLS (needs an account; see [DEPLOY.md](DEPLOY.md))
 
-> **Kill/pivot checkpoint:** if the loop isn't fun here, iterate on M1
-> (deal cost, redraw rules, hand→tower spread) before any netcode work.
+**Exit (automated part) met:** two browsers finish setup and play together
+in e2e; reconnect mid-match is tested; the load test shows a p99 tick of
+0.18 ms per room (target: under 5 ms). **Open:** 4 players on different real networks.
 
-## M2: Online co-op (M)
+## M3: Content complete for co-op — built
 
-- [ ] Node room server, `ws` transport, msgpack plus Zod-validated intents
-- [ ] Lobby codes, join by URL, ready-up, host settings
-- [ ] Snapshot and delta broadcast at 10 Hz, client interpolation, private hand messages
-- [ ] Multi-lane map with the **Center Table** and shared lives
-- [ ] Reconnect with token and full resync. AFK/disconnect handling
-- [ ] Pings and basic chat
-- [ ] Offline mode reuses the same room code in-process (single code path)
-- [ ] Deploy to one VPS/Fly region with TLS
+- [x] All 11 towers, including Laser, Storm, Crown and Jester. Jokers
+- [x] All creep types plus modifiers. 40-wave schedule, bosses at w10/20/30, final boss "The House"
+- [x] Suit research. Card Shop (Burn, Mark, Paint, Promote, Joker, Extra Redraw, Bench Slot)
+- [x] Co-op tools: **Slip** and **The Pot / River Card**
+- [~] Bench: a capacity (slots + 1) instead of a placement timeout; deals are blocked
+  while the bench is full, and towers can be scrapped for 30%
+- [x] Maps: The Felt (1–6), Riverboat (1–4), Back Room (1–3)
+- [x] Difficulty presets, Endless mode
+- [x] Smart bot, bot allies in solo, nightly balance CI with guardrails
+- [x] Interactive tutorial
 
-**Exit:** 4 players on different networks finish a 15-wave match with no
-desync or crash. p99 server tick is under 5 ms. A reconnect mid-wave works.
+**Exit (automated part) met:** smart bots win a full 40-wave match 79–92% on
+Standard (Back Room 38–54%), and no tower family exceeds ~35% of damage.
+**Open:** the 30–50% human win-rate target needs playtests. Bots play better than
+the average human, so their high win rates are expected.
 
-## M3: Content complete for co-op (L)
+## M4: Showdown (versus) — built
 
-- [ ] All 11 towers, including Laser, Storm, Crown and Jester. Jokers
-- [ ] All creep types plus modifiers. 40-wave schedule, bosses at w10/20/30, and the final boss "The House"
-- [ ] Suit research tracks. Card Shop (Burn, Mark, Paint, Promote, Joker, Redraw, Bench)
-- [ ] Co-op tools: **Slip** and **The Pot / River Card**
-- [ ] Bench slots and the placement timeout
-- [ ] Maps: The Felt (1–6), Riverboat (2–4), Back Room (1–3)
-- [ ] Difficulty presets, Endless mode
-- [ ] Smart bot, bot allies in solo, and the full nightly balance CI with guardrails
-- [ ] Interactive tutorial
+- [x] Raises with the income system; targets see gold raised, not the creeps (Bluff)
+- [x] FFA targeting (next opponent clockwise) and teams (any split, set by the host)
+- [x] Bust, spectating, Sudden Death after wave 25
+- [x] Map: Vegas Strip (2–8)
+- [x] Bot opponents that raise
+- [x] End-of-match scoreboard
 
-**Exit:** a full 40-wave co-op match is winnable, and about 30–50% of
-Standard lobbies win in playtests. All guardrails pass nightly, and no tower
-family is over 50% of damage share.
+**Exit (automated part) met:** 8-player FFA runs to completion in sims. Median
+match is 18 minutes. Raise-style win rates are within 7 points (only 2 bot
+styles exist, not 4). **Open:** human Showdown sessions.
 
-## M4: Showdown (versus) (M)
+## M5: Online platform — built
 
-- [ ] Raise/sends with the income system, hidden raise composition (Bluff)
-- [ ] FFA targeting (clockwise) and team modes (2v2, 3v3, 4v4)
-- [ ] Bust, spectate, Sudden Death after w25
-- [ ] Map: Vegas Strip (2–8)
-- [ ] Bot opponents that raise
-- [ ] End-of-match scoreboard: damage, leaks caused, best hand, raise value
+- [~] Accounts: guest profiles with a device token. No OAuth yet (needs
+  Discord/Google/Steam app registrations)
+- [~] Storage: **SQLite** (`node:sqlite`) instead of Postgres. Profiles, match
+  history, stats and the Hand Book all live in one module, so a Postgres move is contained
+- [x] Quick Play for co-op (fills to 4 or starts after 20 s) and Showdown (fills to 4, bots top up)
+- [x] Replays stored per match, served over HTTP, in-client viewer with seek, speed and any seat's view
+- [x] Daily Deal with a leaderboard
+- [x] Moderation: mute, report (stored), chat filter, rate limits
+- [~] Metrics: a JSON `/metrics` endpoint and client error reports in structured logs; no dashboards
+- [ ] Decide monetization (GDD §9): a business decision
+- [ ] Public beta: 100+ concurrent players for a week, day-7 retention
 
-**Exit:** 8-player FFA runs stably. No dominant send strategy in bot sims
-(win-rate spread under 10% across 4 raise-style bots). Median match length is 15–25 min.
+## M6: Polish and launch — built in code
 
-## M5: Online platform (M)
-
-- [ ] Accounts: guest by default, optional OAuth (Discord/Google/Steam later)
-- [ ] Postgres: profiles, match history, stats, Hand Book collection
-- [ ] Quick-play matchmaking for co-op (fill to 4) and Showdown (fill to 6)
-- [ ] Replays: stored per match, with an in-client replay viewer
-- [ ] Daily Deal with leaderboard
-- [ ] Moderation: mute, report, chat filter. Rate limits per account
-- [ ] Metrics dashboards, error reporting
-- [ ] Decide monetization (see GDD §9)
-
-**Exit:** a public beta keeps 100 or more concurrent players on one region
-without incidents for a week. Day-7 retention is measured.
-
-## M6: Polish and launch (L)
-
-- [ ] Art pass: casino-noir felt, tower and creep sprites, card art, big-hand cinematics
-- [ ] Audio pass: music (lobby, waves, boss), SFX set, stingers
-- [ ] Accessibility: 4-color deck, colorblind modes, reduced motion, rebindable keys, UI scale
-- [ ] Performance: 300+ creeps at 60 fps on integrated GPUs, and mobile-browser sanity check
-- [ ] Unlocks and cosmetics, account levels
-- [ ] Tauri desktop build, Steam page, achievements, Steam lobby/invite integration
-- [ ] Localization-ready strings (EN first)
-- [ ] Trailer and store assets. Launch
-
-**Exit:** ship v1.0 to the web and Steam.
+- [~] Art: a consistent vector style drawn in code (towers by family and suit,
+  creeps by type, felt themes). A commissioned art pass is still open
+- [~] Audio: synthesized effects and a generative music loop. Composed music is still open
+- [x] Accessibility: four-color deck, colorblind suit markers, reduced motion, rebindable keys, UI scale
+- [x] Phone layout; the renderer handles hundreds of creeps. 60 fps on low-end GPUs is not yet measured
+- [x] Account levels, XP, cosmetic card backs and felts unlocked by level
+- [x] Tauri desktop build (Linux .deb verified; Windows/macOS build from the same config)
+- [ ] Steam page, achievements, Steam lobby/invite integration (needs a Steamworks account)
+- [x] Localization-ready strings (English table)
+- [ ] Trailer and store assets
 
 ---
 
@@ -129,15 +140,16 @@ without incidents for a week. Day-7 retention is measured.
 - Map editor (`tools/map-editor`) and community maps
 - New tower families via special hands (e.g. "Flush House", "Five Aces")
 - Weekly mutator events
-- Spectator mode with casting tools
+- Spectator casting tools
+- OAuth sign-in and cross-device profiles; Postgres when one SQLite file is no longer enough
 
 ## Risks and mitigations
 
-| Risk                                                 | Impact                | Mitigation                                                                                       |
-| ---------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------ |
-| Loop feels like pure luck                            | Core fun fails        | Redraws, deck tracker, Card Shop deck-shaping, odds hints. Test in M1 before netcode             |
-| Balance explodes with 11 towers × 4 suits × research | Degenerate strategies | Data-driven numbers, nightly bot sims with guardrails, damage-share telemetry                    |
-| Netcode complexity                                   | Delays                | Server-authoritative snapshots (no prediction/rollback). Creeps synced as a single path distance |
-| Too few players to fill lobbies                      | Dead queues           | Bots in solo and fill, lobby links for friend groups, Daily Deal for async play                  |
-| Scope creep (modes, maps)                            | Never shipping        | Strict milestone exits. Hold'em and ranked are post-launch                                       |
-| IP confusion with the original maps                  | Legal/branding        | Original name, art and content. "Inspired by" only. No Blizzard assets                           |
+| Risk                                                 | Impact                | Mitigation                                                                                               |
+| ---------------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------- |
+| Loop feels like pure luck                            | Core fun fails        | Redraws, deck tracker, odds hints, Card Shop deck-shaping. **Playtest next**                             |
+| Balance explodes with 11 towers × 4 suits × research | Degenerate strategies | Data-driven numbers, nightly bot sims with guardrails, damage-share reports                              |
+| Bots overstate how easy it is                        | Too hard for humans   | Treat bot win rates as an upper bound; tune difficulty with playtest data                                |
+| Too few players to fill lobbies                      | Dead queues           | Bots fill Quick Play, solo with bot allies, lobby links, Daily Deal                                      |
+| One SQLite file, one process                         | Scale ceiling         | ~1,100 six-player rooms per core measured; move storage to Postgres and add a matchmaker before sharding |
+| IP confusion with the original maps                  | Legal/branding        | Original name, art and content. "Inspired by" only. No Blizzard assets                                   |

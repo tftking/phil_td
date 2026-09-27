@@ -2,7 +2,16 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', 'apps/server/data/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      'apps/server/data/**',
+      '**/target/**',
+      'apps/desktop/src-tauri/gen/**',
+    ],
+  },
   {
     files: ['tools/**/*.mjs'],
     languageOptions: {

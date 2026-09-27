@@ -1,0 +1,22 @@
+[package]
+name = "pokertd"
+version = "0.2.0"
+description = "Poker TD: a multiplayer tower defense game where poker hands build your towers"
+edition = "2021"
+
+[lib]
+name = "pokertd_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

@@ -5,3 +5,4 @@ coverage/
 .DS_Store
 .vite/
 apps/server/data/
+apps/desktop/src-tauri/target/

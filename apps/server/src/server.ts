@@ -74,6 +74,7 @@ export async function startServer(opts: ServerOptions = {}): Promise<GameServer>
   const rooms = new Map<string, Room>();
   const roomIps = new WeakMap<Room, string>();
   const chatLimiter = new RateLimiter(5, 10_000);
+  const errorLimiter = new RateLimiter(10, 60_000);
 
   const hooks = {
     onMatchStart: () => metrics.matchesStarted++,
@@ -264,6 +265,30 @@ export async function startServer(opts: ServerOptions = {}): Promise<GameServer>
         )
         .all(p.id);
       return json(res, 200, { profile: p, recent });
+    }
+    if (req.method === 'POST' && path === '/client-errors') {
+      const ip = req.socket.remoteAddress ?? '?';
+      if (!errorLimiter.allow(ip)) return json(res, 429, { error: 'slow down' });
+      let body = '';
+      req.on('data', (c: Buffer) => {
+        body += c.toString();
+        if (body.length > 8192) req.destroy();
+      });
+      req.on('end', () => {
+        try {
+          const report = JSON.parse(body) as Record<string, unknown>;
+          console.error(
+            JSON.stringify({ level: 'error', source: 'client', at: now(), ...report }).slice(
+              0,
+              4000,
+            ),
+          );
+        } catch {
+          // Ignore malformed reports.
+        }
+        json(res, 204, null);
+      });
+      return;
     }
     if (req.method === 'GET' && serveStatic(req, res)) return;
     json(res, 404, { error: 'not found' });

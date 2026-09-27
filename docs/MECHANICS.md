@@ -28,14 +28,17 @@ playtests. A "tile" is one grid cell. Time is in seconds, and the sim runs at 20
 
 - The **Deal cost** stays flat. Power scaling comes from waves, research and card
   quality, which keeps the core "one deal = one tower" feel.
-- A locked tower must be placed within 20 s, or it goes to the **Bench** (2
-  slots) and can be placed later. This stops the timer from punishing players who are busy fighting a wave.
+- A locked tower goes to the **Bench** and enters placement mode. The bench
+  holds 2 towers plus the one being placed; while it is full you can't deal.
+  There's no placement timer, so a busy player is never punished for waiting.
+- **Scrap** a benched tower for 30% of its value to free the slot.
+- **Solo only:** _Send next wave now_ starts the next wave early for 1 gold per 2 seconds skipped.
 
 ### 1.2 Jokers
 
 - **Joker:** a wild card that becomes the best possible card for the hand.
 - A Joker enables **Five of a Kind** (the only way to get it).
-- Sources: Card Shop (rare), a reward for a perfect boss wave, and House Rules.
+- Source: the Card Shop. (A perfect-boss-wave reward and House Rules are planned.)
 - Max 2 Jokers in a deck.
 
 ---
@@ -184,11 +187,12 @@ damage     = armor reduces each hit by a flat amount, min 20% of the hit
 | **Regen**    |  1.2 |     0.9 |     1.0 |     0.8 | Regenerates 2% HP/s. Burst checks                               |
 | **Shield**   |  1.0 |     1.0 |       0 |     0.8 | Shield absorbs the first 30% HP of damage. Hearts crit bypasses |
 | **Splitter** |  1.5 |     0.9 |     1.0 |     0.6 | Splits into 3 Swarm on death                                    |
-| **Boss**     |   40 |     0.6 |     3.0 |       1 | Every 10 waves. On the Center Table in co-op                    |
+| **Boss**     |   40 |     0.6 |     3.0 |       1 | Every 10 waves, one in every lane                               |
 
 ### 5.3 Leaks
 
-- Normal creep: −1 life. Brute, Splitter: −2. Boss: −10, or −5 per 25% HP remaining.
+- Normal creep: −1 life. Brute, Splitter: −2. Boss: −10.
+- Showdown raises (sent creeps) pay half bounty.
 - In co-op, a creep leaking from a lane **enters the Center Table** first
   with its remaining HP. Lives are lost only when it reaches the Vault.
 
@@ -201,29 +205,31 @@ damage     = armor reduces each hit by a flat amount, min 20% of the hit
 - **Base count:** 12 + floor(w / 2) creeps × type count multiplier.
 - **Composition schedule (40-wave standard):**
 
-| Waves         | Pattern                                               |
-| ------------- | ----------------------------------------------------- |
-| 1–4           | Grunts. Runners join at w3                            |
-| 5             | **Bonus wave:** "Gold rush" with low HP and 3× bounty |
-| 6–9           | Grunt/Runner mix. Brutes join at w8                   |
-| 7, 17, 27, 37 | **Air waves** (Flyers only)                           |
-| 10, 20, 30    | **Boss** + escort                                     |
-| 11–19         | Swarm and Regen appear. Mixed waves of 2–3 types      |
-| 21–29         | Shield, Splitter. Some waves roll a modifier          |
-| 31–39         | All types, with 2 modifiers on some waves             |
-| 40            | **Final Boss:** "The House" (phases, spawns adds)     |
+| Waves         | Pattern                                                                              |
+| ------------- | ------------------------------------------------------------------------------------ |
+| 1–4           | Grunts. Runners join at w3                                                           |
+| 5             | **Bonus wave:** "Gold rush" with low HP and 3× bounty                                |
+| 6–9           | Grunt/Runner mix. Brutes join at w8                                                  |
+| 7, 17, 27, 37 | **Air waves** (Flyers only)                                                          |
+| 10, 20, 30    | **Boss** + escort                                                                    |
+| 11–19         | Swarm and Regen appear. Mixed waves of 2–3 types                                     |
+| 21–29         | Shield, Splitter. Some waves roll a modifier                                         |
+| 31–39         | All types, with 2 modifiers on some waves                                            |
+| 40            | **Final Boss:** "The House" (1.25× boss HP) with a Brute, Shield and Splitter escort |
 
 **Wave modifiers** (announced in the preview): _Swarm_ (+50% count), _Surge_
 (+30% speed), _Ironclad_ (+2× armor), _Dry Spell_ (no bounty, +50% wave
 bonus), _Fog_ (−1 range on all towers).
 
+Maps can scale creep HP: Back Room's short lanes use 0.75×.
+
 ### 6.1 Difficulty presets
 
 | Preset      | HP × | Starting lives | Bounty × |
 | ----------- | ---: | -------------: | -------: |
-| Casual      |  0.7 |             30 |      1.3 |
-| Standard    |  1.0 |  20 + 5/player |      1.0 |
-| High Roller |  1.4 |  10 + 3/player |     0.85 |
+| Casual      |  0.7 | 25 + 10/player |      1.3 |
+| Standard    |  1.0 | 15 + 10/player |      1.0 |
+| High Roller |  1.4 |   8 + 5/player |     0.85 |
 
 ---
 
