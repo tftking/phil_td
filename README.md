@@ -25,7 +25,8 @@ Or for development with hot reload:
 pnpm dev            # client on http://localhost:5173 (proxies to the server on :8787)
 ```
 
-Share a room with friends on your network: create a room and send the invite link (`/play/CODE`).
+To play online with friends for free, host it from your PC and share a free
+Cloudflare tunnel link: see [Host from your own PC](docs/DEPLOY.md#host-from-your-own-pc-free).
 
 ### Controls
 
