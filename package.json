@@ -19,7 +19,7 @@
     "balance": "tsx tools/balance.ts",
     "loadtest": "tsx tools/loadtest.ts",
     "e2e": "pnpm --filter @pokertd/client build && node tools/e2e.mjs",
-    "start": "pnpm --filter @pokertd/client build && STATIC_DIR=apps/client/dist pnpm --filter @pokertd/server start"
+    "start": "pnpm --filter @pokertd/client build && pnpm --filter @pokertd/server start"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
