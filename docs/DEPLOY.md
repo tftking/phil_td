@@ -24,17 +24,26 @@ play.example.com {
 }
 ```
 
-## Fly.io (or any container host)
+## Fly.io (recommended host)
+
+`fly.toml` is in the repo root. The first deploy is done once by hand:
 
 ```sh
-fly launch --no-deploy          # accept the Dockerfile, pick one region
-fly volumes create pokertd_data --size 1
-# in fly.toml: [mounts] source = "pokertd_data", destination = "/data"
-#              [http_service] internal_port = 8787
-fly deploy
+fly auth login
+fly apps create <unique-name>                      # then set `app` in fly.toml
+fly volumes create pokertd_data --size 1 --region iad
+fly deploy --ha=false                              # one machine: rooms live in memory
 ```
 
-Keep a **single instance**: rooms live in memory, and SQLite is a single file.
+Your game is then at `https://<unique-name>.fly.dev`. Share room links as
+`https://<unique-name>.fly.dev/play/CODE`.
+
+**Automatic deploys:** add a deploy token (`fly tokens create deploy`) as the
+repository secret `FLY_API_TOKEN`. `.github/workflows/deploy.yml` then deploys
+every push to `main`. Without the secret the workflow skips.
+
+Keep a **single machine**: rooms live in memory, and SQLite is a single file.
+A deploy restarts the server, which ends matches in progress; deploy between sessions.
 
 ## Without Docker
 

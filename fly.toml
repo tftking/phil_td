@@ -1,0 +1,38 @@
+# Fly.io config. One machine only: rooms live in memory and SQLite is one file.
+# First deploy (see docs/DEPLOY.md):
+#   fly apps create <unique-name>          # then set `app` below
+#   fly volumes create pokertd_data --size 1 --region iad
+#   fly deploy --ha=false
+app = "pokertd"
+primary_region = "iad"
+
+[env]
+  PORT = "8787"
+
+[[mounts]]
+  source = "pokertd_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  # Keep the server up: stopping it would end every match in progress.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 1000
+    hard_limit = 1500
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "30s"
+    method = "GET"
+    path = "/health"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
