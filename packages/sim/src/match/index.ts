@@ -13,3 +13,4 @@ export {
   STANDARD_WAVES,
 } from './waves';
 export { contextOf, nextOpponent } from './context';
+export * from './replay';

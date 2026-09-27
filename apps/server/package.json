@@ -5,13 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "start": "tsx src/main.ts",
+    "start": "node --import tsx src/main.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@pokertd/protocol": "workspace:*",
     "@pokertd/sim": "workspace:*",
-    "ws": "^8.22.0"
+    "ws": "^8.22.0",
+    "@pokertd/bots": "workspace:*",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1"

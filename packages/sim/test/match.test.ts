@@ -411,7 +411,7 @@ describe('showdown', () => {
       reason: 'locked',
     });
     const snap = buildSnapshot(s, 'b');
-    expect(snap.players.find((p) => p.id === 'b')!.incoming).toBe(60);
+    expect(snap.players!.find((p) => p.id === 'b')!.incoming).toBe(60);
     untilWave(s, 2);
     const sent = s.wave.spawns.filter((sp) => sp.sender === 'a');
     expect(sent).toHaveLength(6);
@@ -450,7 +450,7 @@ describe('snapshots', () => {
     runTicks(s, secondsToTicks(4));
     const snap = buildSnapshot(s, 'b');
     expect(snap.you!.hand).toBeNull();
-    expect(snap.players.find((p) => p.id === 'a')!.holdingHand).toBe(true);
+    expect(snap.players!.find((p) => p.id === 'a')!.holdingHand).toBe(true);
     expect(JSON.stringify(snap)).not.toContain('"draw"');
     const creeps = unpackCreeps(snap.creeps, contextOf(s).pathKeys);
     expect(creeps).toHaveLength(s.creeps.length);

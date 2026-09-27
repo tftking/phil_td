@@ -2,24 +2,30 @@ import { describe, expect, it } from 'vitest';
 import { type C2S, type S2C, decodeC2S, decodeS2C, encode } from '../src/index';
 
 describe('protocol', () => {
-  it('round-trips valid client intents', () => {
+  it('round-trips valid client messages', () => {
     const msgs: C2S[] = [
-      { t: 'join', room: 'FELT7', name: 'Alex' },
-      { t: 'deal' },
-      { t: 'redraw', idx: [0, 3] },
-      { t: 'place', blueprint: 1, x: 4, y: 2 },
-      { t: 'target', tower: 12, mode: 'strongest' },
+      { t: 'hello', name: 'Alex' },
+      { t: 'create', options: { mode: 'coop', map: 'felt', difficulty: 'standard' } },
+      { t: 'join', room: 'FELT7' },
+      { t: 'act', intent: { t: 'deal' } },
+      { t: 'act', intent: { t: 'redraw', idx: [0, 3] }, ref: 4 },
+      { t: 'act', intent: { t: 'place', blueprint: 1, x: 4, y: 2 } },
+      { t: 'act', intent: { t: 'target', tower: 12, mode: 'strongest' } },
+      { t: 'act', intent: { t: 'shopBuy', item: 'paint', card: 12, arg: 1 } },
+      { t: 'ping', kind: 'help', x: 3.5, y: 7 },
       { t: 'chat', text: 'nice flush' },
     ];
     for (const m of msgs) expect(decodeC2S(encode(m))).toEqual({ ok: true, msg: m });
   });
 
-  it('rejects invalid intents without throwing', () => {
+  it('rejects invalid messages without throwing', () => {
     const bad: unknown[] = [
-      { t: 'redraw', idx: [7] },
-      { t: 'join', room: 'nope', name: 'x' },
-      { t: 'place', blueprint: -1, x: 0, y: 0 },
-      { t: 'gimmeGold', amount: 9999 },
+      { t: 'act', intent: { t: 'redraw', idx: [9] } },
+      { t: 'act', intent: { t: 'gimmeGold', amount: 9999 } },
+      { t: 'join', room: 'nope' },
+      { t: 'hello', name: '<script>' },
+      { t: 'hello', name: '' },
+      { t: 'act', intent: { t: 'place', blueprint: -1, x: 0, y: 0 } },
       'hello',
       null,
     ];
@@ -36,8 +42,15 @@ describe('protocol', () => {
     }
   });
 
-  it('round-trips server messages', () => {
-    const m: S2C = { t: 'reject', reason: 'not_enough_gold', ref: 'deal' };
+  it('round-trips server messages with binary payloads', () => {
+    const m: S2C = { t: 'reject', reason: 'room_full', ref: 'join' };
     expect(decodeS2C(encode(m))).toEqual(m);
+    const creeps = new Uint8Array([1, 2, 3, 250]);
+    const back = decodeS2C(encode({ t: 'chat', from: 'p1', name: 'A', text: 'x' }));
+    expect(back.t).toBe('chat');
+    const packed = decodeS2C(encode({ t: 'snap', snap: { creeps } as never, events: [] }));
+    expect(Array.from((packed as { snap: { creeps: Uint8Array } }).snap.creeps)).toEqual([
+      1, 2, 3, 250,
+    ]);
   });
 });

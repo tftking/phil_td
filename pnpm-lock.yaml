@@ -57,12 +57,18 @@ importers:
 
   apps/server:
     dependencies:
+      '@pokertd/bots':
+        specifier: workspace:*
+        version: link:../../packages/bots
       '@pokertd/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       '@pokertd/sim':
         specifier: workspace:*
         version: link:../../packages/sim
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       ws:
         specifier: ^8.22.0
         version: 8.22.0
@@ -79,6 +85,9 @@ importers:
 
   packages/protocol:
     dependencies:
+      '@pokertd/sim':
+        specifier: workspace:*
+        version: link:../sim
       msgpackr:
         specifier: ^2.1.0
         version: 2.1.0

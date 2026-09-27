@@ -33,7 +33,8 @@ export interface PublicPlayer {
   incoming: number;
   holdingHand: boolean;
   bench: number;
-  stats: PlayerStats;
+  /** Only in detailed snapshots (every couple of seconds). */
+  stats?: PlayerStats;
 }
 
 export type PublicTower = Pick<
@@ -67,6 +68,7 @@ export type PublicTower = Pick<
 > & { upgradeCost: number; sellValue: number };
 
 export interface PrivateView {
+  gold: number;
   hand: {
     cards: Card[];
     redrawsUsed: number;
@@ -79,8 +81,9 @@ export interface PrivateView {
   benchSlots: number;
   freeRedraws: number;
   deck: DeckCounts;
-  /** Every card you own (sorted), for Card Shop choices. Order is not revealed. */
-  deckCards: Card[];
+  /** Every card you own (sorted), for Card Shop choices. Order is not revealed.
+   * Only in detailed snapshots. */
+  deckCards?: Card[];
   shopOffers: string[] | null;
   shopBought: string[];
   slipIncoming: Card | null;
@@ -97,17 +100,21 @@ export interface Snapshot {
     modifiers: string[];
     final: boolean;
     spawnsLeft: number;
-    next: WavePreview | null;
+    /** Only in detailed snapshots; undefined means "unchanged". */
+    next?: WavePreview | null;
   };
   lives: number;
   pot: { gold: number; target: number };
   shopOpenUntil: number;
   pause: { paused: boolean; votes: PlayerId[]; budget: number };
   winner: number | null;
-  players: PublicPlayer[];
+  /** Sent every few snapshots; undefined means "unchanged". */
+  players?: PublicPlayer[];
   towersVersion: number;
-  /** Present only when the towers changed since the client's version. */
+  /** Full tower list: present when the client has none (first snapshot, resync). */
   towers?: PublicTower[];
+  /** Tower changes since the client's last snapshot (the server sends this instead of `towers`). */
+  towerDelta?: { changed: PublicTower[]; removed: number[] };
   /** Packed creeps, see packCreeps. */
   creeps: Uint8Array;
   you?: PrivateView;
@@ -204,7 +211,7 @@ export function publicTowers(state: MatchState): PublicTower[] {
   }));
 }
 
-export function privateView(state: MatchState, id: PlayerId): PrivateView {
+export function privateView(state: MatchState, id: PlayerId, detail = true): PrivateView {
   const p = state.players[id]!;
   let hand: PrivateView['hand'] = null;
   if (p.hand) {
@@ -219,12 +226,13 @@ export function privateView(state: MatchState, id: PlayerId): PrivateView {
     };
   }
   return {
+    gold: p.gold,
     hand,
     blueprints: p.blueprints,
     benchSlots: p.benchSlots,
     freeRedraws: p.freeRedraws,
     deck: deckCounts(p.deck),
-    deckCards: [...p.deck.draw, ...p.deck.discard].sort((a, b) => a - b),
+    ...(detail ? { deckCards: [...p.deck.draw, ...p.deck.discard].sort((a, b) => a - b) } : {}),
     shopOffers: state.tick < state.shop.openUntil ? p.shopOffers : null,
     shopBought: p.shopBought,
     slipIncoming: p.slipIncoming,
@@ -236,11 +244,15 @@ export function privateView(state: MatchState, id: PlayerId): PrivateView {
 /**
  * Builds the snapshot for one player (or a spectator, with `id` null).
  * Towers are included only when they changed since `knownTowersVersion`.
+ * Slow-changing parts (stats, next-wave preview, deck list) are included
+ * only when `detail` is set; clients keep the last copy.
  */
 export function buildSnapshot(
   state: MatchState,
   id: PlayerId | null,
   knownTowersVersion = -1,
+  detail = true,
+  withPlayers = true,
 ): Snapshot {
   const incoming = new Map<PlayerId, number>();
   for (const p of playersInOrder(state)) {
@@ -258,38 +270,85 @@ export function buildSnapshot(
       modifiers: state.wave.modifiers,
       final: state.wave.final,
       spawnsLeft: state.wave.spawns.length,
-      next: state.wave.final ? null : wavePreview(state.wave.n + 1),
+      ...(detail ? { next: state.wave.final ? null : wavePreview(state.wave.n + 1) } : {}),
     },
     lives: state.lives,
     pot: { ...state.pot },
     shopOpenUntil: state.shop.openUntil,
     pause: { ...state.pause, votes: [...state.pause.votes] },
     winner: state.winner,
-    players: playersInOrder(state).map((p) => ({
-      id: p.id,
-      name: p.name,
-      team: p.team,
-      lane: p.lane,
-      gold: p.gold,
-      lives: p.lives,
-      busted: p.busted,
-      research: [...p.research],
-      researching: p.researching,
-      income: p.income,
-      incoming: incoming.get(p.id) ?? 0,
-      holdingHand: !!p.hand,
-      bench: p.blueprints.length,
-      stats: p.stats,
-    })),
+    ...(withPlayers || detail ? { players: publicPlayers(state, incoming, detail) } : {}),
     towersVersion: state.towersVersion,
     creeps: packCreeps(state),
   };
   if (knownTowersVersion !== state.towersVersion) snap.towers = publicTowers(state);
-  if (id && state.players[id]) snap.you = privateView(state, id);
+  if (id && state.players[id]) snap.you = privateView(state, id, detail);
   return snap;
+}
+
+function publicPlayers(
+  state: MatchState,
+  incoming: Map<PlayerId, number>,
+  detail: boolean,
+): PublicPlayer[] {
+  return playersInOrder(state).map((p) => ({
+    id: p.id,
+    name: p.name,
+    team: p.team,
+    lane: p.lane,
+    gold: p.gold,
+    lives: p.lives,
+    busted: p.busted,
+    research: [...p.research],
+    researching: p.researching,
+    income: p.income,
+    incoming: incoming.get(p.id) ?? 0,
+    holdingHand: !!p.hand,
+    bench: p.blueprints.length,
+    ...(detail ? { stats: p.stats } : {}),
+  }));
 }
 
 /** Filters events for one viewer (a reshuffle is only news to its owner). */
 export function eventsFor(events: GameEvent[], id: PlayerId | null): GameEvent[] {
   return events.filter((e) => e.kind !== 'reshuffle' || e.player === id);
+}
+
+/**
+ * Turns a snapshot's full tower list into a delta against what this client
+ * already has. `cache` (tower id → serialized tower) is per client and is
+ * updated in place.
+ */
+export function deltaTowers(snap: Snapshot, cache: Map<number, string>, full: boolean): void {
+  if (!snap.towers) return;
+  if (full) {
+    cache.clear();
+    for (const t of snap.towers) cache.set(t.id, JSON.stringify(t));
+    return;
+  }
+  const changed: PublicTower[] = [];
+  const seen = new Set<number>();
+  for (const t of snap.towers) {
+    seen.add(t.id);
+    const key = JSON.stringify(t);
+    if (cache.get(t.id) !== key) {
+      changed.push(t);
+      cache.set(t.id, key);
+    }
+  }
+  const removed = [...cache.keys()].filter((id) => !seen.has(id));
+  for (const id of removed) cache.delete(id);
+  delete snap.towers;
+  snap.towerDelta = { changed, removed };
+}
+
+/** Client side: applies a snapshot's towers or tower delta to the current list. */
+export function applyTowers(current: PublicTower[], snap: Snapshot): PublicTower[] {
+  if (snap.towers) return snap.towers;
+  if (!snap.towerDelta) return current;
+  const { changed, removed } = snap.towerDelta;
+  const byId = new Map(current.map((t) => [t.id, t]));
+  for (const id of removed) byId.delete(id);
+  for (const t of changed) byId.set(t.id, t);
+  return [...byId.values()].sort((a, b) => a.id - b.id);
 }

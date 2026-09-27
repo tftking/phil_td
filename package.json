@@ -16,7 +16,8 @@
     "format:check": "prettier --check .",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
     "odds": "tsx packages/sim/src/cli/odds.ts",
-    "balance": "tsx tools/balance.ts"
+    "balance": "tsx tools/balance.ts",
+    "loadtest": "tsx tools/loadtest.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
