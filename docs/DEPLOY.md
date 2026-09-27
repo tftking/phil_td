@@ -87,7 +87,7 @@ so the desktop app can find your server; solo, practice and the tutorial work of
 
 ```sh
 cd apps/desktop
-VITE_SERVER_URL=https://play.example.com pnpm build   # .deb/.AppImage on Linux, .msi/.exe on Windows, .dmg on macOS
+VITE_SERVER_URL=https://play.example.com pnpm bundle   # .deb/.AppImage on Linux, .msi/.exe on Windows, .dmg on macOS
 ```
 
 Linux builds need WebKitGTK (`libwebkit2gtk-4.1-dev`, `libgtk-3-dev`, `librsvg2-dev`).

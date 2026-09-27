@@ -7,7 +7,7 @@
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build",
+    "bundle": "tauri build",
     "icons": "tauri icon icon-source.png"
   },
   "devDependencies": {

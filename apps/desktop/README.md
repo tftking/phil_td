@@ -7,7 +7,7 @@ and replays work offline. Online play talks to the server set at build time.
 # from the repo root
 pnpm install
 cd apps/desktop
-VITE_SERVER_URL=https://play.example.com pnpm build   # installers in src-tauri/target/release/bundle/
+VITE_SERVER_URL=https://play.example.com pnpm bundle   # installers in src-tauri/target/release/bundle/
 pnpm dev                                             # dev window against the Vite dev server
 pnpm icons                                           # regenerate icons from icon-source.png
 ```
