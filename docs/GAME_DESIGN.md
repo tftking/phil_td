@@ -36,20 +36,22 @@ netcode, reconnects, balance built on data, and modern UX.
 
 ## 3. Core loop
 
-```
-            ┌───────────────────────────────────────────────┐
-            │                  WAVE N                       │
-            │                                               │
-  earn gold ──► DEAL (50g) ──► REDRAW (0..n) ──► LOCK HAND  │
-      ▲                                           │         │
-      │                                           ▼         │
-  kills, wave bonus,                      PLACE TOWER on    │
-  interest, Diamonds                      a build tile      │
-      │                                           │         │
-      └──── enemies die ◄── towers fire ◄─────────┘         │
-            │                                               │
-            │   between waves: Upgrade · Research · Shop    │
-            └───────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    gold(["Gold<br/>kills · wave bonus · interest · ♦ Greed"])
+    deal["Deal 5 cards<br/>50g"]
+    decide{"Redraw or lock?"}
+    redraw["Redraw marked cards<br/>1st free, then 20 / 40 / 80g"]
+    lock["Lock the best hand"]
+    bench["Tower waits on the bench"]
+    place["Place it on a build tile"]
+    fire["Towers fire at creeps"]
+    spend["Upgrade · Research · Card Shop"]
+    gold --> deal --> decide
+    decide -- "chase a better hand" --> redraw --> decide
+    decide -- "good enough" --> lock --> bench --> place --> fire
+    fire -- "creeps die" --> gold
+    gold -.-> spend -.-> fire
 ```
 
 - **Micro loop (seconds):** deal, then evaluate, then redraw or lock, then place.
@@ -83,6 +85,21 @@ netcode, reconnects, balance built on data, and modern UX.
   - **Pings:** help, going for a flush, saving gold, and danger markers.
 - Win: survive wave 40 (the final boss). **Endless** is a room option that keeps going after wave 40.
 
+Where a creep goes in co-op:
+
+```mermaid
+flowchart LR
+    s1["Lane 1 spawn"] --> l1["Lane 1 road<br/>player 1's towers"]
+    s2["Lane 2 spawn"] --> l2["Lane 2 road<br/>player 2's towers"]
+    sn["Lanes 3–6 …"] --> ln["their roads"]
+    l1 -- "leaks" --> c["Center Table road<br/>anyone's center towers (max 3 each)"]
+    l2 -- "leaks" --> c
+    ln -- "leaks" --> c
+    c -- "leaks" --> v[("Vault<br/>shared team lives")]
+```
+
+![Co-op on The Felt with four players: lanes on both sides of the Center Table road, the Vault at the bottom](images/coop-table.png)
+
 ### 4.2 Showdown (versus)
 
 - 2–8 players FFA, or 2v2 / 3v3 / 4v4 teams, each in an identical lane.
@@ -96,6 +113,27 @@ netcode, reconnects, balance built on data, and modern UX.
   1 cosmetic ping per wave.
 - Last player (or team) standing wins. After wave 25 there is **Sudden Death**:
   creep HP increases 10% per wave.
+
+How a raise plays out:
+
+```mermaid
+sequenceDiagram
+    participant A as Alex (raises)
+    participant S as Server
+    participant B as Sam (next opponent)
+    A->>S: Raise 3× Runner (40g)
+    S-->>A: Income +3 gold every wave, for the rest of the match
+    S-->>B: "40g raised against you" (not what it is)
+    Note over S: Next wave starts
+    S->>B: 3 Runners join Sam's wave (+10% HP)
+    alt They get through
+        Note over B: Sam loses lives
+    else Sam kills them
+        Note over B: Sam earns no bounty for them
+    end
+```
+
+![Showdown practice with four players: identical lanes, each ending in its own vault, and the Raise panel](images/showdown-table.png)
 
 ### 4.3 Solo / Practice
 
@@ -156,6 +194,10 @@ Map rules:
   option), scalable UI, rebindable hotkeys, reduced-motion toggle.
 - **Hotkeys:** `D` deal, `1–5` toggle cards, `R` redraw, `Space` lock,
   `Q/W/E` upgrade/sell/target mode, `Tab` scoreboard.
+
+![The hand panel: a Pair of 5s makes a Twin tower; two cards are marked for a redraw with its odds. The inspector shows a selected tower](images/hand-and-inspector.png)
+
+![A lobby: host settings, a ready player, a bot, and chat](images/lobby.png)
 
 ## 8. Onboarding
 

@@ -3,8 +3,11 @@
 Milestones are ordered by **risk**: prove the card-to-tower loop offline, then
 pay for netcode, then content and meta. Each milestone has **exit criteria**.
 
-```
-M0 Foundations ─► M1 Offline slice ─► M2 Online co-op ─► M3 Content ─► M4 Showdown ─► M5 Online platform ─► M6 Launch
+```mermaid
+flowchart TD
+    M0["M0 Foundations ✅"] --> M1["M1 Offline slice ✅"] --> M2["M2 Online co-op ✅"] --> M3["M3 Content ✅"]
+    M3 --> M4["M4 Showdown ✅"] --> M5["M5 Online platform ✅"] --> M6["M6 Launch ✅ in code"]
+    M6 --> next["Needs people:<br/>playtests · public host · art and audio · Steam"]
 ```
 
 ## Status at a glance
