@@ -1,9 +1,15 @@
 import { h, render } from 'preact';
-import { buildLayout, mapDef } from '@pokertd/sim';
-import { createBoard } from './render/board';
-import { HandPanel } from './ui/HandPanel';
+import * as store from './state/store';
+import { connectOnline } from './state/store';
+import * as gameUi from './ui/Game';
+import { App } from './ui/App';
+import './style.css';
 
-// Mount the UI first so the board sizes itself to the space that is left.
-render(h(HandPanel, {}), document.getElementById('ui')!);
-const geo = buildLayout(mapDef('felt'), 1);
-await createBoard(document.getElementById('board')!, geo);
+render(h(App, {}), document.getElementById('app')!);
+connectOnline();
+
+// Small hook for automated browser tests and debugging from the console.
+(window as unknown as { pokertd: unknown }).pokertd = {
+  store,
+  tileToClient: (x: number, y: number) => gameUi.board?.tileToClient(x, y) ?? null,
+};

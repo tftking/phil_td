@@ -14,7 +14,8 @@
     "@pokertd/sim": "workspace:*",
     "@preact/signals": "^2.11.2",
     "pixi.js": "^8.21.0",
-    "preact": "^10.29.8"
+    "preact": "^10.29.8",
+    "@pokertd/bots": "workspace:*"
   },
   "devDependencies": {
     "vite": "^8.3.1"

@@ -3,7 +3,8 @@ import { C2S, type S2C } from './messages';
 
 const packr = new Packr({ useRecords: false });
 
-export const encode = (msg: C2S | S2C): Uint8Array => packr.pack(msg);
+export const encode = (msg: C2S | S2C): Uint8Array<ArrayBuffer> =>
+  packr.pack(msg) as Uint8Array<ArrayBuffer>;
 
 export type DecodeResult<T> = { ok: true; msg: T } | { ok: false; error: string };
 

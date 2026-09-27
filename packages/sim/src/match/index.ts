@@ -14,3 +14,4 @@ export {
 } from './waves';
 export { contextOf, nextOpponent } from './context';
 export * from './replay';
+export type { WavePreview } from './waves';

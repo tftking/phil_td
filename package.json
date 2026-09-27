@@ -17,7 +17,9 @@
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
     "odds": "tsx packages/sim/src/cli/odds.ts",
     "balance": "tsx tools/balance.ts",
-    "loadtest": "tsx tools/loadtest.ts"
+    "loadtest": "tsx tools/loadtest.ts",
+    "e2e": "pnpm --filter @pokertd/client build && node tools/e2e.mjs",
+    "start": "pnpm --filter @pokertd/client build && STATIC_DIR=apps/client/dist pnpm --filter @pokertd/server start"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
@@ -27,7 +29,8 @@
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.1",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.2",
+    "playwright": "1.56.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
