@@ -156,7 +156,9 @@
     "lives": 20,
     "suddenDeathWave": 25,
     "suddenDeathHpGrowth": 0.1,
-    "startingIncome": 0
+    "startingIncome": 0,
+    "sendHpMult": 1.1,
+    "sendBountyMult": 0
   },
   "bigHandCategory": 7
 }

@@ -181,8 +181,9 @@ export function startWave(state: MatchState): void {
         const units = send.count * r.count;
         for (let i = 0; i < units; i++) {
           const at = start + Math.floor(((i + 0.5) * window) / units);
-          const entry = make(send.enemy, at, target.lane, send.hpMult ?? 1, p.id);
-          entry.bounty = Math.max(1, Math.round(entry.bounty / 2));
+          const sd = data.rules.showdown;
+          const entry = make(send.enemy, at, target.lane, (send.hpMult ?? 1) * sd.sendHpMult, p.id);
+          entry.bounty = Math.round(entry.bounty * sd.sendBountyMult);
           spawns.push(entry);
         }
       }
