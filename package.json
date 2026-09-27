@@ -9,13 +9,14 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @pokertd/client --filter @pokertd/server dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "pnpm -r typecheck && tsc -p tools",
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test",
-    "odds": "tsx packages/sim/src/cli/odds.ts"
+    "odds": "tsx packages/sim/src/cli/odds.ts",
+    "balance": "tsx tools/balance.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

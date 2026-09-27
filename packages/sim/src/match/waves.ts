@@ -15,6 +15,8 @@ import { recomputeTowers } from './towers';
 import type { MatchState, SpawnEntry } from './types';
 
 export const STANDARD_WAVES = 40;
+/** "The House" has this much more HP than a regular boss of its wave. */
+const FINAL_BOSS_HP = 1.25;
 
 /** The schedule entry for a wave. Past wave 40 the 31–39 patterns repeat, with bosses every 10. */
 export function waveDef(n: number): WaveDef {
@@ -96,7 +98,7 @@ function suddenDeath(state: MatchState, n: number): number {
  * Showdown income), opens the shop on schedule and queues every spawn.
  */
 export function startWave(state: MatchState): void {
-  const { diff } = contextOf(state);
+  const { diff, map } = contextOf(state);
   const n = ++state.wave.n;
   const def = waveDef(n);
   const rng = rngOf(state, 'waves');
@@ -121,7 +123,7 @@ export function startWave(state: MatchState): void {
 
   // Spawns: the same composition in every active lane, in a shuffled order.
   const countMult = modifierProduct(mods, 'countMult');
-  const hpMult = (def.hpMult ?? 1) * suddenDeath(state, n);
+  const hpMult = (def.hpMult ?? 1) * (map.hpMult ?? 1) * suddenDeath(state, n);
   const bountyMult = (def.bountyMult ?? 1) * modifierProduct(mods, 'bountyMult');
   const speedMult = modifierProduct(mods, 'speedMult');
   const armorMult = modifierProduct(mods, 'armorMult');
@@ -164,7 +166,7 @@ export function startWave(state: MatchState): void {
       spawns.push(make(type, start + Math.floor((i * window) / Math.max(1, order.length)), p.lane));
     });
     for (const b of bosses) {
-      spawns.push(make(b.type, start + window, p.lane, finalBoss ? 2 : 1));
+      spawns.push(make(b.type, start + window, p.lane, finalBoss ? FINAL_BOSS_HP : 1));
     }
   }
 

@@ -32,13 +32,14 @@ export function redrawOdds(
   pool: readonly Card[],
   rng: Rng,
   maxSamples = 50_000,
+  exactLimit = EXACT_LIMIT,
 ): OddsResult {
   const k = redraw.length;
   const tally = new Array<number>(11).fill(0);
   const trial = [...hand];
   let samples = 0;
   const combos = choose(pool.length, k);
-  const exact = combos <= EXACT_LIMIT;
+  const exact = combos <= exactLimit;
 
   if (exact) {
     const pick = (start: number, depth: number): void => {

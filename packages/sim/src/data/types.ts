@@ -165,6 +165,8 @@ export interface MapDef {
   name: string;
   mode: 'coop' | 'showdown';
   players: [number, number];
+  /** Creep HP multiplier for this map (short lanes need less HP). Default 1. */
+  hpMult?: number;
   /** One lane, in local tile coordinates. The layout builder places one per player. */
   lane: {
     width: number;

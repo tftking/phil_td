@@ -71,6 +71,12 @@ importers:
         specifier: ^8.18.1
         version: 8.18.1
 
+  packages/bots:
+    dependencies:
+      '@pokertd/sim':
+        specifier: workspace:*
+        version: link:../sim
+
   packages/protocol:
     dependencies:
       msgpackr:

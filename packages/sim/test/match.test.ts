@@ -88,7 +88,7 @@ describe('match setup', () => {
     const s = solo();
     expect(s.phase).toBe('countdown');
     expect(s.players.a!.gold).toBe(150);
-    expect(s.lives).toBe(25);
+    expect(s.lives).toBe(25); // 15 + 10 per player
     expect(s.players.a!.deck.draw).toHaveLength(52);
   });
 
