@@ -48,6 +48,22 @@ playtests. A "tile" is one grid cell. Time is in seconds, and the sim runs at 20
 The best 5-card poker hand determines the **tower type**. Only the **scoring
 cards** (e.g. the two cards of a Pair) determine **power** and **suit**.
 
+How a tower's stats come together:
+
+```mermaid
+flowchart TD
+    hand["Locked hand<br/>(best 5 cards)"] --> cat["Hand category"] --> type["Tower type<br/>Pair → Twin … Royal Flush → Crown"]
+    hand --> scoring["Scoring cards"]
+    scoring --> power["Card power<br/>1 + 0.05 × (average rank − 2)"]
+    scoring --> suit["Dominant suit<br/>♠ Pierce · ♥ Crit · ♦ Greed · ♣ Chill"]
+    cat -- "Flush / Straight Flush / Royal" --> pure["Pure suit: effect × 2"]
+    type --> stats(["Tower stats"])
+    power --> stats
+    suit --> stats
+    pure --> stats
+    mods["Modifiers<br/>level 1–3 (+35% damage, +10% range each)<br/>suit research 0–5 · Crown aura +25%<br/>hot tile +10% · Fog −1 range"] --> stats
+```
+
 ### 2.1 Base odds (5 cards, no redraw)
 
 | Hand            | Probability | With 1 optimal redraw (approx.) |
@@ -175,6 +191,21 @@ bounty(w)  = 2 + floor(w / 3)          (per kill, before Diamonds)
 damage     = armor reduces each hit by a flat amount, min 20% of the hit
 ```
 
+What happens to one hit:
+
+```mermaid
+flowchart TD
+    hit["Tower hit<br/>damage × power × level × aura × hot tile"] --> crit{"♥ Crit roll?"}
+    crit -- yes --> dbl["× 2"] --> boss
+    crit -- no --> boss{"Boss hit by a Sniper?"}
+    boss -- yes --> b50["+50%"] --> shield
+    boss -- no --> shield{"Shield left?<br/>(crits ignore shields)"}
+    shield -- yes --> absorb["Shield absorbs it first"] --> armor
+    shield -- no --> armor["Armor: flat reduction minus ♠ Pierce<br/>never below 20% of the hit"]
+    armor --> hp["Creep loses HP<br/>♣ Chill slows it (half on bosses)"]
+    hp -- "HP reaches 0" --> death["Bounty to the killer's owner, plus ♦ Greed<br/>Splitters break into 3 Swarm"]
+```
+
 ### 5.2 Archetypes
 
 | Type         | HP × | Speed × | Armor × | Count × | Notes                                                           |
@@ -223,6 +254,17 @@ bonus), _Fog_ (−1 range on all towers).
 
 Maps can scale creep HP: Back Room's short lanes use 0.75×.
 
+One wave, start to finish:
+
+```mermaid
+flowchart TD
+    start(["Wave n starts"]) --> pay["Pay the wave bonus (20 + 5n)<br/>plus interest (co-op) or income (Showdown)"]
+    pay --> mods["Roll modifiers"] --> shop{"n = 6, 11, 16 …?"}
+    shop -- yes --> open["Card Shop opens for 20 s"] --> spawn
+    shop -- no --> spawn["Creeps spawn over 12–18 s<br/>same mix in every lane, bosses last"]
+    spawn --> next(["Next wave 40 s after this one started<br/>(50 s on boss waves)"])
+```
+
 ### 6.1 Difficulty presets
 
 | Preset      | HP × | Starting lives | Bounty × |
@@ -240,6 +282,25 @@ starting gold     = 150  (enough for 2 deals + a redraw)
 wave clear bonus  = 20 + 5 × w      (paid at wave start, before spawn)
 interest          = 4% of banked gold at wave start, cap 30 g/wave
 kill bounty       = see §5.1 (+ Diamonds)
+```
+
+Where gold comes from and where it goes:
+
+```mermaid
+flowchart LR
+    kills["Kill bounty"] --> purse(("Your gold"))
+    bonus["Wave bonus"] --> purse
+    interest["Interest 4%, max 30<br/>(co-op)"] --> purse
+    income["Raise income<br/>(Showdown)"] --> purse
+    greed["♦ Greed"] --> purse
+    refunds["Sell and scrap refunds"] --> purse
+    purse --> deal["Deals (50g)"]
+    purse --> redraw["Paid redraws"]
+    purse --> up["Upgrades"]
+    purse --> research["Research (100–800g)"]
+    purse --> shop["Card Shop"]
+    purse --> pot["The Pot (co-op)"]
+    purse --> raise["Raises (Showdown)"]
 ```
 
 **Target curve** (a Standard, average player by the end of the wave): about 1.5

@@ -39,6 +39,15 @@ permanent one, set up a named tunnel with a free Cloudflare account.
 Alternatives: [Tailscale](https://tailscale.com) (friends join your private
 network) or forwarding port 8787 on your router.
 
+```mermaid
+flowchart LR
+    friend["Friend's browser"] -- "https://….trycloudflare.com" --> cf["Cloudflare"]
+    cf -- "tunnel" --> cfd["cloudflared<br/>on your PC"] --> srv["pnpm start<br/>game server :8787"]
+    lan["Friend on your Wi-Fi"] -- "http://your-local-ip:8787" --> srv
+    you["You"] -- "http://localhost:8787" --> srv
+    srv --> data[("apps/server/data<br/>SQLite + replays")]
+```
+
 Things to know:
 
 - Your PC must stay on and awake while people play. Closing the terminal ends all matches.

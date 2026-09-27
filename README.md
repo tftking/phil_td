@@ -10,6 +10,8 @@ bot allies, online co-op (1–6), Showdown (2–8), Quick Play, the Daily Deal,
 replays and a tutorial. What's left needs people: playtests, a public
 deployment, and commissioned art and music. See the [Roadmap](docs/ROADMAP.md).
 
+![Four players on The Felt: each lane leads to the shared Center Table and the Vault](docs/images/coop-table.png)
+
 ## Play it locally
 
 Requires Node 22.12+ and pnpm 10 (`corepack enable`).
@@ -49,6 +51,8 @@ Cloudflare tunnel link: see [Host from your own PC](docs/DEPLOY.md#host-from-you
 All keys can be rebound in Settings.
 
 ## Docs
+
+The docs include diagrams (Mermaid, rendered by GitHub) and screenshots of the game.
 
 | Doc                                          | What it covers                                                   |
 | -------------------------------------------- | ---------------------------------------------------------------- |

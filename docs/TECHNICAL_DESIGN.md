@@ -62,6 +62,32 @@ tools/
   e2e.mjs            pnpm e2e: real server + Chromium
 ```
 
+How the packages depend on each other (arrows point at what a package uses):
+
+```mermaid
+flowchart LR
+    desktop["apps/desktop<br/>Tauri"] -. "wraps" .-> client
+    subgraph apps
+        client["apps/client<br/>Vite + PixiJS + Preact"]
+        server["apps/server<br/>Node + ws + SQLite"]
+    end
+    subgraph packages
+        protocol["@pokertd/protocol<br/>zod schemas + msgpack"]
+        bots["@pokertd/bots<br/>AI players"]
+        sim["@pokertd/sim<br/>game rules, deterministic"]
+    end
+    tools["tools/<br/>balance · loadtest · e2e"] --> server
+    tools --> bots
+    client --> protocol
+    client --> bots
+    server --> protocol
+    server --> bots
+    protocol --> sim
+    bots --> sim
+    client --> sim
+    server --> sim
+```
+
 **The rule:** `packages/sim/src` never uses `Math.random`, `Date`, timers or
 anything async (ESLint enforces it). All randomness goes through seeded RNG
 streams stored in the match state, and all time is ticks.
@@ -88,6 +114,14 @@ streams stored in the match state, and all time is ticks.
   bounties and splits → busts → win/loss.
 - **Derived tower stats** (Jester copies, Crown auras, levels, hot tiles,
   research, Fog) are recomputed whenever an input changes.
+
+The order of one tick:
+
+```mermaid
+flowchart TD
+    a["Wave start?<br/>payouts · modifiers · shop"] --> b["Spawns"] --> c["Research finished?"] --> d["Shop closes?"]
+    d --> e["Move creeps<br/>regen · slows · leaks"] --> f["Towers attack"] --> g["Deaths · bounties · splits"] --> h["Busts<br/>(Showdown)"] --> i["Win / loss"]
+```
 
 ### 4.1 Hand evaluation
 
@@ -130,6 +164,25 @@ local until submitted.
   deltas got under the target without acks.
 - **Interpolation:** the client lerps each creep's `dist` over the 100 ms snapshot gap.
 
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant R as Room (server)
+    participant S as sim
+    C->>R: act {deal} (msgpack over WebSocket)
+    Note over R: Queued until the next tick
+    loop Every 50 ms (20 Hz)
+        R->>S: applyIntent() for queued intents, then bot moves
+        R->>S: stepMatch()
+        S-->>R: Events (attacks, deaths, leaks …)
+    end
+    R-->>C: result {ok} or a reason
+    loop Every 100 ms (10 Hz)
+        R-->>C: snap: packed creeps, tower delta, your private view, events
+    end
+    Note over C: Interpolates creep positions over the 100 ms gap
+```
+
 ### 6.2 Protocol (v2)
 
 Client → server (zod-validated): `hello` (guest login), `rename`, `create`,
@@ -154,6 +207,23 @@ Limits: 4 KB messages, 30 messages/s per connection, chat 5 per 10 s, 3 rooms pe
 - **Disconnects:** after 3 minutes (or right away for a deliberate leave), a
   smart bot plays the seat if the host allows it. It hands back if the player returns.
 - **Pause:** co-op majority vote, 2 minutes per match.
+
+Reconnecting:
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant R as Room
+    C->>R: join {room}
+    R-->>C: welcome {seat token}
+    Note over C: Keeps the token in localStorage
+    C--xR: Connection drops
+    Note over R: Seat kept. After 3 min a bot plays it (if the host allows)
+    C->>R: hello, then join {room, seat token}
+    R-->>C: welcome, start, full snapshot
+    Note over R: The bot hands the seat back
+```
+
 - **Quick Play:** fills to 4, or starts after 20 s (co-op) or 30 s (Showdown, topped up with bots).
 - **Daily Deal:** a private solo room seeded by the UTC date. Best result per player per day.
 
@@ -172,6 +242,15 @@ Postgres, then run several processes behind a matchmaker that assigns rooms.
   Offline matches keep the last 10 in localStorage.
 - `ReplayPlayer` re-runs the sim from the seed. A server test checks that a
   replay reproduces the exact state hash of the live match.
+
+```mermaid
+flowchart LR
+    seed["Settings + seed"] --> live["Live match"]
+    intents["Accepted intents<br/>[tick, player, intent]"] --> live
+    live --> file[("Replay file<br/>a few KB gzipped")]
+    file --> player["ReplayPlayer<br/>same sim, same inputs"] --> same["The same match, tick for tick<br/>(checked by state hash in tests)"]
+```
+
 - The viewer supports play/pause, 1–8× speed, seeking (by replaying forward),
   and watching through any seat's eyes, hand included.
 
@@ -194,6 +273,15 @@ Postgres, then run several processes behind a matchmaker that assigns rooms.
   `LocalLink` (runs the match in the browser and emits the same messages as the
   server; used for solo, practice and the tutorial), `ReplayLink`. The UI only
   handles server messages, so every mode shares one code path.
+
+```mermaid
+flowchart LR
+    server[("Game server")] <--> online["OnlineLink<br/>WebSocket"]
+    online --> ui["UI + renderer<br/>only handle server messages"]
+    local["LocalLink<br/>sim running in the browser"] --> ui
+    replay["ReplayLink<br/>ReplayPlayer"] --> ui
+```
+
 - **Renderer layers:** map (drawn once per match), placement overlay, towers
   (redrawn only on change), creeps (interpolated), effects, floating text.
   Effects and floating text are capped. Reduced motion trims particles.
