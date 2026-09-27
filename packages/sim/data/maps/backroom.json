@@ -1,0 +1,26 @@
+{
+  "$comment": "Back Room: short lanes with few build tiles, for experts (1-3 players).",
+  "id": "backroom",
+  "name": "Back Room",
+  "mode": "coop",
+  "players": [1, 3],
+  "lane": {
+    "width": 12,
+    "height": 8,
+    "ground": [
+      [0, 1],
+      [9, 1],
+      [9, 6],
+      [11, 6]
+    ],
+    "air": [
+      [0, 1],
+      [11, 6]
+    ],
+    "buildAreas": [
+      [2, 2, 6, 2],
+      [10, 2, 2, 3]
+    ],
+    "hotTiles": [{ "x": 5, "y": 3, "bonus": "damage", "amount": 0.15 }]
+  }
+}

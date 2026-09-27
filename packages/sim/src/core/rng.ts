@@ -30,10 +30,10 @@ function splitmix32(seed: number): () => number {
 const rotl = (x: number, k: number): number => ((x << k) | (x >>> (32 - k))) >>> 0;
 
 export class Rng {
-  private s0: number;
-  private s1: number;
-  private s2: number;
-  private s3: number;
+  protected s0: number;
+  protected s1: number;
+  protected s2: number;
+  protected s3: number;
 
   constructor(state: RngState) {
     [this.s0, this.s1, this.s2, this.s3] = state;
@@ -45,6 +45,19 @@ export class Rng {
     const mixed = fnv1a(keys.join('\u0000'), fnv1a(String(seed >>> 0)));
     const sm = splitmix32(mixed);
     return new Rng([sm(), sm(), sm(), sm()]);
+  }
+
+  /**
+   * An Rng whose state is stored in `backing` and written back after every
+   * draw. Match state keeps plain RngState arrays so it stays serializable.
+   */
+  static bound(backing: RngState): Rng {
+    return new BoundRng(backing);
+  }
+
+  /** Fresh state for a named stream, to store inside match state. */
+  static streamState(seed: number, ...keys: (string | number)[]): RngState {
+    return Rng.stream(seed, ...keys).state;
   }
 
   get state(): RngState {
@@ -100,5 +113,21 @@ export class Rng {
       arr[j] = tmp;
     }
     return arr;
+  }
+}
+
+class BoundRng extends Rng {
+  constructor(private readonly backing: RngState) {
+    super(backing);
+  }
+
+  override nextU32(): number {
+    const r = super.nextU32();
+    const b = this.backing;
+    b[0] = this.s0;
+    b[1] = this.s1;
+    b[2] = this.s2;
+    b[3] = this.s3;
+    return r;
   }
 }

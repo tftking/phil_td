@@ -1,5 +1,5 @@
 {
-  "$comment": "Economy, cards, upgrades, research, shop and difficulty. docs/MECHANICS.md §1, §3, §4, §6.1, §7.",
+  "$comment": "Economy, cards, upgrades, research, shop and difficulty. docs/MECHANICS.md \u00a71, \u00a73, \u00a74, \u00a76.1, \u00a77.",
   "economy": {
     "startingGold": 150,
     "waveBonusBase": 20,
@@ -25,7 +25,8 @@
     "upgradeCostFactor": 0.6,
     "sellRefund": 0.6,
     "sellGraceSeconds": 10,
-    "targeting": ["first", "last", "strongest", "weakest", "closest", "flying"]
+    "targeting": ["first", "last", "strongest", "weakest", "closest", "flying"],
+    "scrapRefund": 0.3
   },
   "suits": [
     {
@@ -73,18 +74,48 @@
     "openSeconds": 20,
     "offers": 3,
     "items": [
-      { "id": "burn", "name": "Burn", "cost": 60, "desc": "Remove a card from your deck" },
-      { "id": "mark", "name": "Mark", "cost": 80, "desc": "Duplicate a card" },
-      { "id": "paint", "name": "Paint", "cost": 100, "desc": "Change a card's suit" },
-      { "id": "promote", "name": "Promote", "cost": 100, "desc": "Raise a card's rank by 1" },
-      { "id": "joker", "name": "Joker", "cost": 300, "desc": "Add a Joker" },
+      {
+        "id": "burn",
+        "name": "Burn",
+        "cost": 60,
+        "desc": "Remove a card from your deck"
+      },
+      {
+        "id": "mark",
+        "name": "Mark",
+        "cost": 80,
+        "desc": "Duplicate a card"
+      },
+      {
+        "id": "paint",
+        "name": "Paint",
+        "cost": 100,
+        "desc": "Change a card's suit"
+      },
+      {
+        "id": "promote",
+        "name": "Promote",
+        "cost": 100,
+        "desc": "Raise a card's rank by 1"
+      },
+      {
+        "id": "joker",
+        "name": "Joker",
+        "cost": 300,
+        "desc": "Add a Joker"
+      },
       {
         "id": "extra_redraw",
         "name": "Extra Redraw",
         "cost": 150,
         "desc": "+1 free redraw per hand"
       },
-      { "id": "bench_slot", "name": "Bench Slot", "cost": 120, "desc": "+1 Bench slot" }
+      {
+        "id": "bench_slot",
+        "name": "Bench Slot",
+        "cost": 120,
+        "desc": "+1 Bench slot"
+      }
     ]
   },
   "difficulties": [
@@ -112,5 +143,20 @@
       "lives": 10,
       "livesPerPlayer": 3
     }
-  ]
+  ],
+  "coop": {
+    "centerTowersPerPlayer": 3,
+    "centerWidth": 5,
+    "potPerPlayer": 150,
+    "slipsPerWave": 1,
+    "pauseSecondsPerMatch": 120,
+    "disconnectGraceSeconds": 180
+  },
+  "showdown": {
+    "lives": 20,
+    "suddenDeathWave": 25,
+    "suddenDeathHpGrowth": 0.1,
+    "startingIncome": 0
+  },
+  "bigHandCategory": 7
 }

@@ -1,0 +1,35 @@
+{
+  "$comment": "Riverboat: longer winding lanes for 2-4 players.",
+  "id": "riverboat",
+  "name": "Riverboat",
+  "mode": "coop",
+  "players": [1, 4],
+  "lane": {
+    "width": 16,
+    "height": 10,
+    "ground": [
+      [0, 5],
+      [3, 5],
+      [3, 1],
+      [8, 1],
+      [8, 8],
+      [12, 8],
+      [12, 3],
+      [15, 3]
+    ],
+    "air": [
+      [0, 5],
+      [15, 3]
+    ],
+    "buildAreas": [
+      [0, 6, 3, 2],
+      [4, 2, 3, 5],
+      [9, 2, 2, 5],
+      [13, 5, 2, 3]
+    ],
+    "hotTiles": [
+      { "x": 5, "y": 4, "bonus": "damage", "amount": 0.1 },
+      { "x": 10, "y": 4, "bonus": "range", "amount": 0.1 }
+    ]
+  }
+}

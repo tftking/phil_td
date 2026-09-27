@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   GAME_DATA,
   HandCategory,
-  buildMapGeometry,
+  buildLayout,
   creepHp,
   enemyDef,
   interest,
@@ -67,26 +67,50 @@ describe('formulas', () => {
   });
 });
 
-describe('map geometry', () => {
-  const geo = buildMapGeometry(mapDef('felt'));
-
-  it('builds paths with lengths', () => {
-    const ground = geo.paths.get('ground')!;
-    expect(ground.length).toBe(12 + 3 + 9 + 3 + 12);
-    expect(pointAtDistance(ground, 0)).toEqual([0, 1]);
-    expect(pointAtDistance(ground, 6)).toEqual([6, 1]);
-    expect(pointAtDistance(ground, 13.5)).toEqual([12, 2.5]);
-    expect(pointAtDistance(ground, 999)).toEqual([15, 7]);
+describe('map layouts', () => {
+  it('builds every map for every supported player count', () => {
+    for (const map of GAME_DATA.maps) {
+      for (let n = map.players[0]; n <= map.players[1]; n++) {
+        const layout = buildLayout(map, n);
+        expect(layout.lanes).toHaveLength(n);
+      }
+    }
   });
 
-  it('keeps build tiles off the path', () => {
-    expect(geo.buildTiles.length).toBe(32);
-    for (const [x, y] of geo.buildTiles) expect(geo.pathTiles.has(`${x},${y}`)).toBe(false);
+  it('lays out a 1-player felt with a center road to the vault', () => {
+    const layout = buildLayout(mapDef('felt'), 1);
+    const lane = layout.lanes[0]!;
+    expect(lane.ground.length).toBe(11 + 3 + 9 + 3 + 11);
+    expect(lane.buildTiles).toHaveLength(32);
+    expect(pointAtDistance(lane.ground, 0)).toEqual([0, 1]);
+    expect(pointAtDistance(lane.ground, 5)).toEqual([5, 1]);
+    expect(pointAtDistance(lane.ground, 12.5)).toEqual([11, 2.5]);
+    // Center path starts at the lane exit and ends at the vault.
+    expect(lane.center!.points[0]).toEqual([13, 7]);
+    expect(lane.center!.points.at(-1)).toEqual(layout.center!.vault);
+    for (const [x, y] of lane.buildTiles) expect(layout.roadTiles.has(`${x},${y}`)).toBe(false);
   });
 
-  it('rejects build tiles on the path', () => {
+  it('mirrors right-hand co-op lanes toward the center', () => {
+    const layout = buildLayout(mapDef('felt'), 2);
+    const right = layout.lanes[1]!;
+    expect(right.mirrored).toBe(true);
+    const exit = right.ground.points.at(-1)!;
+    expect(exit[0]).toBe(layout.center!.rect[0] + layout.center!.rect[2]);
+    expect(right.center!.points[1]![0]).toBe(layout.center!.boss.points[0]![0]);
+  });
+
+  it('gives each showdown lane its own vault', () => {
+    const layout = buildLayout(mapDef('vegas'), 4);
+    expect(layout.center).toBeNull();
+    for (const lane of layout.lanes) expect(lane.vault).toEqual(lane.ground.points.at(-1));
+  });
+
+  it('rejects bad templates and player counts', () => {
     const bad = structuredClone(mapDef('felt'));
-    bad.buildAreas.push([0, 1, 1, 1]);
-    expect(() => buildMapGeometry(bad)).toThrow(/on the path/);
+    bad.id = 'bad';
+    bad.lane.buildAreas.push([0, 1, 1, 1]);
+    expect(() => buildLayout(bad, 1)).toThrow(/on the path/);
+    expect(() => buildLayout(mapDef('backroom'), 5)).toThrow(/1-3 players/);
   });
 });

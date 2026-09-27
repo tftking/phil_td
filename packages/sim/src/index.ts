@@ -8,3 +8,4 @@ export * from './core/hash';
 export * from './data/index';
 export * from './map/geometry';
 export * from './rules/formulas';
+export * from './match/index';

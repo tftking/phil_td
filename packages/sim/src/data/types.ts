@@ -118,6 +118,7 @@ export interface RulesData {
     upgradeCostFactor: number;
     sellRefund: number;
     sellGraceSeconds: number;
+    scrapRefund: number;
     targeting: TargetingMode[];
   };
   suits: {
@@ -139,6 +140,22 @@ export interface RulesData {
     items: { id: string; name: string; cost: number; desc: string }[];
   };
   difficulties: DifficultyDef[];
+  coop: {
+    centerTowersPerPlayer: number;
+    centerWidth: number;
+    potPerPlayer: number;
+    slipsPerWave: number;
+    pauseSecondsPerMatch: number;
+    disconnectGraceSeconds: number;
+  };
+  showdown: {
+    lives: number;
+    suddenDeathWave: number;
+    suddenDeathHpGrowth: number;
+    startingIncome: number;
+  };
+  /** Hands at or above this category trigger the lobby-wide banner. */
+  bigHandCategory: number;
 }
 
 export type Point = [number, number];
@@ -146,14 +163,30 @@ export type Point = [number, number];
 export interface MapDef {
   id: string;
   name: string;
+  mode: 'coop' | 'showdown';
   players: [number, number];
-  width: number;
-  height: number;
-  paths: { id: string; air?: boolean; points: Point[] }[];
-  /** Rectangles of buildable tiles: [x, y, width, height]. */
-  buildAreas: [number, number, number, number][];
-  hotTiles: { x: number; y: number; bonus: 'range' | 'damage'; amount: number }[];
-  vault: Point;
+  /** One lane, in local tile coordinates. The layout builder places one per player. */
+  lane: {
+    width: number;
+    height: number;
+    ground: Point[];
+    air: Point[];
+    /** Rectangles of buildable tiles: [x, y, width, height]. */
+    buildAreas: [number, number, number, number][];
+    hotTiles: { x: number; y: number; bonus: 'range' | 'damage'; amount: number }[];
+  };
+}
+
+export interface SendDef {
+  id: string;
+  name: string;
+  enemy: string;
+  count: number;
+  cost: number;
+  income: number;
+  unlockWave: number;
+  hpMult?: number;
+  cooldownWaves?: number;
 }
 
 export interface GameData {
@@ -162,4 +195,5 @@ export interface GameData {
   waves: WavesData;
   rules: RulesData;
   maps: MapDef[];
+  sends: SendDef[];
 }

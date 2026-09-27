@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Text } from 'pixi.js';
-import { type MapGeometry, tileKey } from '@pokertd/sim';
+import { type MapLayout, tileKey } from '@pokertd/sim';
 
 const COLORS = {
   background: 0x0a2a20,
@@ -15,7 +15,7 @@ const COLORS = {
 };
 
 /** Draws the static map. Towers and creeps get their own layers in M1. */
-export async function createBoard(host: HTMLElement, geo: MapGeometry): Promise<Application> {
+export async function createBoard(host: HTMLElement, geo: MapLayout): Promise<Application> {
   const app = new Application();
   await app.init({ resizeTo: host, background: COLORS.background, antialias: true });
   host.appendChild(app.canvas);
@@ -25,7 +25,7 @@ export async function createBoard(host: HTMLElement, geo: MapGeometry): Promise<
   drawMap(world, geo);
 
   const fit = (): void => {
-    const { width, height } = geo.def;
+    const { width, height } = geo;
     const scale = Math.min(app.screen.width / width, app.screen.height / height) * 0.94;
     world.scale.set(scale);
     world.position.set(
@@ -38,8 +38,8 @@ export async function createBoard(host: HTMLElement, geo: MapGeometry): Promise<
   return app;
 }
 
-function drawMap(layer: Container, geo: MapGeometry): void {
-  const { width, height } = geo.def;
+function drawMap(layer: Container, geo: MapLayout): void {
+  const { width, height } = geo;
   const g = new Graphics();
 
   g.roundRect(-0.2, -0.2, width + 0.4, height + 0.4, 0.4).fill(COLORS.felt);
@@ -47,26 +47,27 @@ function drawMap(layer: Container, geo: MapGeometry): void {
   for (let y = 0; y <= height; y++) g.moveTo(0, y).lineTo(width, y);
   g.stroke({ width: 0.02, color: COLORS.grid });
 
-  for (const [x, y] of geo.buildTiles) {
+  for (const [x, y] of geo.lanes.flatMap((l) => l.buildTiles)) {
     g.roundRect(x + 0.06, y + 0.06, 0.88, 0.88, 0.12)
       .fill(COLORS.build)
       .stroke({ width: 0.03, color: COLORS.buildEdge });
   }
-  for (const hot of geo.def.hotTiles) {
-    g.circle(hot.x + 0.5, hot.y + 0.5, 0.12).fill(COLORS.hot);
+  for (const key of geo.hot.keys()) {
+    const [hx, hy] = key.split(',').map(Number) as [number, number];
+    g.circle(hx + 0.5, hy + 0.5, 0.12).fill(COLORS.hot);
   }
 
-  for (const key of geo.pathTiles) {
+  for (const key of geo.roadTiles) {
     const [x, y] = key.split(',').map(Number) as [number, number];
     g.rect(x, y, 1, 1).fill(COLORS.path);
   }
   // Soft edge where the path meets non-path tiles.
-  for (const key of geo.pathTiles) {
+  for (const key of geo.roadTiles) {
     const [x, y] = key.split(',').map(Number) as [number, number];
-    if (!geo.pathTiles.has(tileKey(x, y - 1))) g.moveTo(x, y).lineTo(x + 1, y);
-    if (!geo.pathTiles.has(tileKey(x, y + 1))) g.moveTo(x, y + 1).lineTo(x + 1, y + 1);
-    if (!geo.pathTiles.has(tileKey(x - 1, y))) g.moveTo(x, y).lineTo(x, y + 1);
-    if (!geo.pathTiles.has(tileKey(x + 1, y))) g.moveTo(x + 1, y).lineTo(x + 1, y + 1);
+    if (!geo.roadTiles.has(tileKey(x, y - 1))) g.moveTo(x, y).lineTo(x + 1, y);
+    if (!geo.roadTiles.has(tileKey(x, y + 1))) g.moveTo(x, y + 1).lineTo(x + 1, y + 1);
+    if (!geo.roadTiles.has(tileKey(x - 1, y))) g.moveTo(x, y).lineTo(x, y + 1);
+    if (!geo.roadTiles.has(tileKey(x + 1, y))) g.moveTo(x + 1, y).lineTo(x + 1, y + 1);
   }
   g.stroke({ width: 0.05, color: COLORS.pathEdge });
 
@@ -78,7 +79,7 @@ function drawMap(layer: Container, geo: MapGeometry): void {
     g.stroke({ width: 0.04, color: COLORS.air, alpha: 0.5 });
   }
 
-  const [vx, vy] = geo.def.vault;
+  const [vx, vy] = geo.center?.vault ?? geo.lanes[0]!.vault!;
   g.roundRect(vx + 0.1, vy + 0.1, 0.8, 0.8, 0.15).fill(COLORS.vault);
   layer.addChild(g);
 

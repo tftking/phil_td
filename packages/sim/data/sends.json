@@ -1,0 +1,71 @@
+{
+  "$comment": "Showdown raises (sends), docs/MECHANICS.md §8.1. Creeps use the current wave's HP formula.",
+  "sends": [
+    {
+      "id": "grunts",
+      "name": "3× Grunt",
+      "enemy": "grunt",
+      "count": 3,
+      "cost": 30,
+      "income": 2,
+      "unlockWave": 1
+    },
+    {
+      "id": "runners",
+      "name": "3× Runner",
+      "enemy": "runner",
+      "count": 3,
+      "cost": 40,
+      "income": 3,
+      "unlockWave": 3
+    },
+    {
+      "id": "brute",
+      "name": "1× Brute",
+      "enemy": "brute",
+      "count": 1,
+      "cost": 60,
+      "income": 4,
+      "unlockWave": 6
+    },
+    {
+      "id": "swarm",
+      "name": "6× Swarm",
+      "enemy": "swarm",
+      "count": 6,
+      "cost": 70,
+      "income": 5,
+      "unlockWave": 9
+    },
+    {
+      "id": "flyers",
+      "name": "2× Flyer",
+      "enemy": "flyer",
+      "count": 2,
+      "cost": 80,
+      "income": 6,
+      "unlockWave": 12
+    },
+    {
+      "id": "regen_brute",
+      "name": "1× Regen Brute",
+      "enemy": "regen",
+      "count": 1,
+      "cost": 150,
+      "income": 10,
+      "unlockWave": 16,
+      "hpMult": 2.5
+    },
+    {
+      "id": "all_in",
+      "name": "All-in Mini-boss",
+      "enemy": "boss",
+      "count": 1,
+      "cost": 400,
+      "income": 25,
+      "unlockWave": 20,
+      "hpMult": 0.35,
+      "cooldownWaves": 5
+    }
+  ]
+}

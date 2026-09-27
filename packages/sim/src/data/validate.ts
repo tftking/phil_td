@@ -1,5 +1,5 @@
 import { HandCategory } from '../cards/evaluate';
-import { buildMapGeometry } from '../map/geometry';
+import { buildLayout } from '../map/geometry';
 import type { GameData } from './types';
 
 /**
@@ -52,11 +52,19 @@ export function validateGameData(data: GameData): string[] {
   if (rules.difficulties.length === 0) err('rules: no difficulties');
 
   for (const map of data.maps) {
-    try {
-      buildMapGeometry(map);
-    } catch (e) {
-      err(`map ${map.id}: ${(e as Error).message}`);
+    for (let n = map.players[0]; n <= map.players[1]; n++) {
+      try {
+        buildLayout(map, n);
+      } catch (e) {
+        err(`map ${map.id} (${n} players): ${(e as Error).message}`);
+        break;
+      }
     }
+  }
+
+  for (const send of data.sends) {
+    if (!enemyIds.has(send.enemy)) err(`send ${send.id}: unknown enemy ${send.enemy}`);
+    if (send.cost <= 0 || send.count <= 0) err(`send ${send.id}: cost and count must be > 0`);
   }
   return errors;
 }
