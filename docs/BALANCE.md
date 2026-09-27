@@ -14,14 +14,14 @@ Treat bot win rates as an **upper bound** for humans: bots never misclick or hes
 
 ## Guardrails (checked nightly in CI)
 
-| Guardrail                              | Target      | Result                   |
-| -------------------------------------- | ----------- | ------------------------ |
-| Greedy clears wave 15 (solo Standard)  | ≥ 90%       | 100%                     |
-| Greedy wins (solo Standard)            | ≤ 5%        | 0% (dies around wave 30) |
-| Smart wins (solo Standard)             | ≥ 60%       | 79–87%                   |
-| Top tower family share of smart damage | ≤ 50%       | ~35% (Mortar)            |
-| Showdown raise-style win-rate spread   | < 10 points | 4 (4p), 7 (8p)           |
-| Showdown median match length           | 15–25 min   | 18 min                   |
+| Guardrail                              | Target      | Result                    |
+| -------------------------------------- | ----------- | ------------------------- |
+| Greedy clears wave 15 (solo Standard)  | ≥ 90%       | 100%                      |
+| Greedy wins (solo Standard)            | ≤ 5%        | 0% (dies around wave 30)  |
+| Smart wins (solo Standard)             | ≥ 60%       | 79–87%                    |
+| Top tower family share of smart damage | ≤ 50%       | ~35% (Mortar)             |
+| Showdown raise-style win-rate spread   | < 10 points | 4 (4p, 300 games), 3 (8p) |
+| Showdown median match length           | 15–25 min   | 18 min                    |
 
 ## Co-op win rates (smart bots, 24–60 runs each)
 
@@ -37,14 +37,16 @@ Treat bot win rates as an **upper bound** for humans: bots never misclick or hes
 
 ## Changes made from the first design numbers
 
-| Change                                                    | Why                                                                                   |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Lives: 15 + 10 per player on Standard (was 20 + 5)        | Every lane leaks into one shared pool, so 4 players won 25% against 87% solo. Now 92% |
-| Casual 25 + 10 per player, High Roller 8 + 5              | Same scaling across difficulties                                                      |
-| Final boss HP ×1.25 (was ×2)                              | The ×2 version was a wall for every build                                             |
-| Bosses spawn in every lane (not only on the Center Table) | Center towers alone could not kill a boss; the Center Table still catches leaks       |
-| Map HP multiplier (Back Room 0.75×)                       | Short lanes give towers less time; 0% wins without it                                 |
-| Back Room gets one more build row (24 tiles)              | 18 tiles was not enough at wave 30                                                    |
+| Change                                                                        | Why                                                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lives: 15 + 10 per player on Standard (was 20 + 5)                            | Every lane leaks into one shared pool, so 4 players won 25% against 87% solo. Now 92%                                                                                                                                                                                                               |
+| Casual 25 + 10 per player, High Roller 8 + 5                                  | Same scaling across difficulties                                                                                                                                                                                                                                                                    |
+| Final boss HP ×1.25 (was ×2)                                                  | The ×2 version was a wall for every build                                                                                                                                                                                                                                                           |
+| Bosses spawn in every lane (not only on the Center Table)                     | Center towers alone could not kill a boss; the Center Table still catches leaks                                                                                                                                                                                                                     |
+| Map HP multiplier (Back Room 0.75×)                                           | Short lanes give towers less time; 0% wins without it                                                                                                                                                                                                                                               |
+| Back Room gets one more build row (24 tiles)                                  | 18 tiles was not enough at wave 30                                                                                                                                                                                                                                                                  |
+| Raised creeps: +10% HP, no bounty for the target (was normal HP, half bounty) | The first nightly run caught raisers at 17% vs 33%: sent creeps almost never leaked and fed the target gold. +50% HP swung it to 33% vs 18%; +10% lands at 27% vs 23% over 300 games (11% vs 14% at 8 players). Doubling raise income alone changed nothing, since late-game gold has nowhere to go |
+| Nightly Showdown sample raised to 300 games                                   | 100 games left about ±5 points of noise per style against a 10-point limit                                                                                                                                                                                                                          |
 
 ## What the damage mix says
 

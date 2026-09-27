@@ -153,6 +153,10 @@ export interface RulesData {
     suddenDeathWave: number;
     suddenDeathHpGrowth: number;
     startingIncome: number;
+    /** HP multiplier for raised (sent) creeps. */
+    sendHpMult: number;
+    /** Bounty the target earns for killing a raised creep (0 = none). */
+    sendBountyMult: number;
   };
   /** Hands at or above this category trigger the lobby-wide banner. */
   bigHandCategory: number;

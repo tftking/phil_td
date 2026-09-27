@@ -19,7 +19,7 @@ jobs:
       - name: Co-op guardrails (solo Standard)
         run: pnpm balance --runs 200 --check --csv coop.csv
       - name: Showdown guardrails (4 players)
-        run: pnpm balance --mode showdown --map vegas --players 4 --runs 100 --check --csv showdown.csv
+        run: pnpm balance --mode showdown --map vegas --players 4 --runs 300 --check --csv showdown.csv
       - uses: actions/upload-artifact@v4
         if: always()
         with:

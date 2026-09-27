@@ -192,7 +192,7 @@ damage     = armor reduces each hit by a flat amount, min 20% of the hit
 ### 5.3 Leaks
 
 - Normal creep: −1 life. Brute, Splitter: −2. Boss: −10.
-- Showdown raises (sent creeps) pay half bounty.
+- Showdown raises (sent creeps) pay no bounty to the player they were sent at.
 - In co-op, a creep leaking from a lane **enters the Center Table** first
   with its remaining HP. Lives are lost only when it reaches the Vault.
 
@@ -268,7 +268,9 @@ between deals, research and levels late.
 | 1× Regen Brute     | 150 g |           +10 | w16                   |
 | "All-in" Mini-boss | 400 g |           +25 | w20, once per 5 waves |
 
-- Sends scale with the current wave's HP formula.
+- Sends scale with the current wave's HP formula and get **+10% HP** (`sendHpMult`).
+  They give the target **no bounty** (`sendBountyMult`), so raising pressures
+  opponents instead of feeding them.
 - Sends go to the **next living opponent clockwise** in FFA, or to the
   opposing team's lanes round-robin in team modes.
 - Raises lock in when the wave spawns. Targets see a chip-stack indicator
