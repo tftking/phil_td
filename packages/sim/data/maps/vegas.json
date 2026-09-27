@@ -1,0 +1,26 @@
+{
+  "$comment": "Vegas Strip: identical Showdown lanes in a grid, each ending in its own vault.",
+  "id": "vegas",
+  "name": "Vegas Strip",
+  "mode": "showdown",
+  "players": [2, 8],
+  "lane": {
+    "width": 16,
+    "height": 7,
+    "ground": [
+      [0, 1],
+      [13, 1],
+      [13, 5],
+      [0, 5]
+    ],
+    "air": [
+      [0, 1],
+      [0, 5]
+    ],
+    "buildAreas": [
+      [1, 2, 11, 2],
+      [14, 2, 2, 3]
+    ],
+    "hotTiles": [{ "x": 6, "y": 3, "bonus": "range", "amount": 0.1 }]
+  }
+}

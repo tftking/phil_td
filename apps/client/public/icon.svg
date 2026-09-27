@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="felt" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#1b6b4f"/>
+      <stop offset="1" stop-color="#0a2a20"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="200" fill="url(#felt)"/>
+  <g transform="rotate(-12 512 540)">
+    <rect x="250" y="190" width="400" height="580" rx="48" fill="#fbf8f1" stroke="#d9d2c0" stroke-width="8"/>
+    <text x="300" y="300" font-size="110" font-family="Georgia, serif" font-weight="700" fill="#1b1b1b">A</text>
+    <text x="450" y="560" font-size="260" text-anchor="middle" font-family="serif" fill="#1b1b1b">♠</text>
+  </g>
+  <g transform="rotate(10 600 560)">
+    <rect x="420" y="250" width="400" height="580" rx="48" fill="#fbf8f1" stroke="#d9d2c0" stroke-width="8"/>
+    <text x="470" y="360" font-size="110" font-family="Georgia, serif" font-weight="700" fill="#d8454b">A</text>
+    <text x="620" y="620" font-size="260" text-anchor="middle" font-family="serif" fill="#d8454b">♥</text>
+  </g>
+  <rect x="140" y="760" width="744" height="110" rx="30" fill="#e8c15a"/>
+  <text x="512" y="840" font-size="84" text-anchor="middle" font-family="Georgia, serif" font-weight="700" fill="#1a1206">POKER TD</text>
+</svg>

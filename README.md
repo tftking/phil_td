@@ -1,62 +1,88 @@
 # Poker TD
 
-A tower defense game where poker hands determine what towers you place.
+A standalone, online multiplayer tower defense game inspired by the classic
+**Poker Defense / PokerTD** StarCraft custom maps. You pay gold to be dealt
+poker hands, and the hand you make decides which tower you get. Hold your lane
+with friends in co-op, or raise gold against rivals in Showdown.
 
-## How to open
+**Status:** playable end to end, in the browser and as a desktop app. Solo with
+bot allies, online co-op (1–6), Showdown (2–8), Quick Play, the Daily Deal,
+replays and a tutorial. What's left needs people: playtests, a public
+deployment, and commissioned art and music. See the [Roadmap](docs/ROADMAP.md).
 
-1. Install Godot 4.2+
-2. Open Godot, click "Import"
-3. Navigate to this folder and select `project.godot`
-4. Hit Play (F5)
+## Play it locally
 
-No assets needed — everything is drawn in code.
+Requires Node 22.12+ and pnpm 10 (`corepack enable`).
 
-## How to play
-
-- A wave starts automatically
-- You hold 8 cards at the bottom of the screen
-- **Click cards** to select up to 5
-- The hand rank previews in the bottom-left (e.g. "Flush")
-- Click **Play Hand** to evaluate
-- If rank > High Card, your cursor enters placement mode
-- **Click a green cell** on the grid to place the tower
-- **Right-click** or **ESC** to cancel placement
-- Click **Discard** to swap selected cards (3 discards per wave)
-- Survive as many waves as you can
-
-## Hand → Tower mapping
-
-| Hand            | Tower   | Notes                        |
-|-----------------|---------|------------------------------|
-| High card       | —       | No placement                 |
-| Pair            | Archer  | Balanced starter             |
-| Two pair        | Double  | Faster fire rate             |
-| Three of a kind | Sniper  | Long range, high damage      |
-| Straight        | Rapid   | Very fast, short range       |
-| Flush           | Splash  | AoE damage                   |
-| Full house      | Mortar  | Large AoE, slow              |
-| Four of a kind  | Laser   | High single-target DPS       |
-| Straight flush  | Storm   | Fast + AoE                   |
-| Royal flush     | Nuke    | Massive AoE, game-changer    |
-
-## Architecture
-
-```
-autoloads/GameManager.gd    — gold, lives, wave state, signals
-scripts/Grid.gd             — draws map, owns path + tower slots
-scripts/Enemy.gd            — walks world-space path, draws self
-scripts/Tower.gd            — targets enemies, fires projectiles
-scripts/Projectile.gd       — homes to target, deals damage
-scripts/CardHand.gd         — 52-card deck, draw/discard, evaluation
-scripts/WaveManager.gd      — spawns enemies with delay
-scripts/TowerPlacer.gd      — placement mode after hand is played
-scripts/Main.gd             — wires everything together
-ui/HUD.gd                   — top bar + bottom controls
-ui/CardHandUI.gd            — draws the 8 card slots
+```sh
+pnpm install
+pnpm start          # builds the client and serves everything on http://localhost:8787
 ```
 
-## Gemini integration hook
+Or for development with hot reload:
 
-Replace `_generate_wave()` in `Main.gd` with an HTTP request to Gemini.
-Pass current wave number + player stats, receive JSON wave config array.
-`AIManager` autoload is the right place for the API call.
+```sh
+pnpm dev            # client on http://localhost:5173 (proxies to the server on :8787)
+```
+
+Share a room with friends on your network: create a room and send the invite link (`/play/CODE`).
+
+### Controls
+
+| Key                | Action                                                  |
+| ------------------ | ------------------------------------------------------- |
+| `D`                | Deal (50 gold)                                          |
+| `1`–`5`            | Mark cards for a redraw                                 |
+| `R`                | Redraw marked cards                                     |
+| `Space`            | Lock the hand; the tower goes to your bench             |
+| Click              | Place a tower / select a tower                          |
+| Right-click, `Esc` | Cancel                                                  |
+| `U` / `S` / `T`    | Upgrade / sell / change targeting of the selected tower |
+| `Q`                | Research your main suit                                 |
+| `Tab` (hold)       | Scoreboard                                              |
+| `H`                | Hand rankings                                           |
+| `F`                | Zoom to your lane; wheel zooms, drag pans               |
+| `P`                | Vote to pause (co-op)                                   |
+| `N`                | Send the next wave early (solo)                         |
+
+All keys can be rebound in Settings.
+
+## Docs
+
+| Doc                                          | What it covers                                                   |
+| -------------------------------------------- | ---------------------------------------------------------------- |
+| [Game Design](docs/GAME_DESIGN.md)           | Vision, pillars, core loop, modes, maps, progression, UX         |
+| [Mechanics & Balance](docs/MECHANICS.md)     | Cards, hands to towers, suits, upgrades, enemies, waves, economy |
+| [Balance report](docs/BALANCE.md)            | Bot-measured win rates, guardrails, and what changed             |
+| [Technical Design](docs/TECHNICAL_DESIGN.md) | Architecture, simulation, netcode, protocol, testing (as built)  |
+| [Deploying](docs/DEPLOY.md)                  | Docker, configuration, endpoints, capacity, backups              |
+| [Roadmap](docs/ROADMAP.md)                   | Milestones, what's done, and what still needs people             |
+
+## Repository
+
+```
+packages/sim        deterministic game rules: cards, evaluator, waves, combat, views, replays
+packages/sim/data   tuning data: towers, enemies, waves, rules, sends, maps (JSON)
+packages/protocol   client/server messages (zod-validated, msgpack on the wire)
+packages/bots       greedy / smart / raiser bots and a headless match runner
+apps/server         Node server: rooms, match loop, profiles (SQLite), quick play, replays
+apps/client         Vite + PixiJS + Preact browser client (also runs offline modes)
+apps/desktop        Tauri desktop wrapper
+tools/              balance runner, load test, end-to-end browser test
+```
+
+## Commands
+
+| Command                                  | What                                                                |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| `pnpm check`                             | Lint, format check, typecheck, unit/integration tests               |
+| `pnpm e2e`                               | Real server + Chromium end-to-end test                              |
+| `pnpm balance --runs 60 --check`         | Bot balance run with guardrails (see [BALANCE.md](docs/BALANCE.md)) |
+| `pnpm loadtest --rooms 100`              | Server load test                                                    |
+| `pnpm odds "AH KH 7H 2C 9H" --redraw 2C` | Exact redraw odds for a hand                                        |
+| `docker build -t pokertd .`              | Production image (see [DEPLOY.md](docs/DEPLOY.md))                  |
+
+The simulation must stay deterministic. ESLint blocks `Math.random`, `Date` and
+timers in `packages/sim/src`, so all randomness goes through seeded RNG streams.
+
+The earlier single-player Godot prototype is in git history (commit `3af8b17`).

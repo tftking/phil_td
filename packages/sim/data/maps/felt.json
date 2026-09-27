@@ -1,0 +1,31 @@
+{
+  "$comment": "The Felt: default co-op table. Lane coordinates are local tiles; the layout builder places lanes on both sides of the Center Table.",
+  "id": "felt",
+  "name": "The Felt",
+  "mode": "coop",
+  "players": [1, 6],
+  "lane": {
+    "width": 14,
+    "height": 9,
+    "ground": [
+      [0, 1],
+      [11, 1],
+      [11, 4],
+      [2, 4],
+      [2, 7],
+      [13, 7]
+    ],
+    "air": [
+      [0, 1],
+      [13, 7]
+    ],
+    "buildAreas": [
+      [3, 2, 8, 2],
+      [3, 5, 8, 2]
+    ],
+    "hotTiles": [
+      { "x": 6, "y": 3, "bonus": "range", "amount": 0.1 },
+      { "x": 7, "y": 5, "bonus": "damage", "amount": 0.1 }
+    ]
+  }
+}

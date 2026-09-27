@@ -1,0 +1,16 @@
+{
+  "name": "@pokertd/bots",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI players: bot allies, disconnect takeover, and balance simulation.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pokertd/sim": "workspace:*"
+  }
+}

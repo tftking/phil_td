@@ -1,0 +1,9 @@
+{
+  "name": "Poker TD",
+  "short_name": "Poker TD",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a2a20",
+  "theme_color": "#0a2a20",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

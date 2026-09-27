@@ -1,0 +1,18 @@
+{
+  "name": "@pokertd/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Client/server message types, validation and wire encoding.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "msgpackr": "^2.1.0",
+    "zod": "^4.6.5",
+    "@pokertd/sim": "workspace:*"
+  }
+}

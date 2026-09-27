@@ -1,0 +1,119 @@
+{
+  "$comment": "Tower stats by hand. Numbers from docs/MECHANICS.md §2.2. Damage is before card power, levels and suit effects.",
+  "towers": [
+    {
+      "id": "plinker",
+      "name": "Plinker",
+      "hand": 0,
+      "damage": 10,
+      "attacksPerSecond": 1.0,
+      "range": 3.0,
+      "hitsAir": true
+    },
+    {
+      "id": "twin",
+      "name": "Twin",
+      "hand": 1,
+      "damage": 12,
+      "attacksPerSecond": 1.0,
+      "range": 3.0,
+      "hitsAir": true,
+      "targets": 2
+    },
+    {
+      "id": "sentry",
+      "name": "Sentry",
+      "hand": 2,
+      "damage": 22,
+      "attacksPerSecond": 1.4,
+      "range": 3.5,
+      "hitsAir": true
+    },
+    {
+      "id": "sniper",
+      "name": "Sniper",
+      "hand": 3,
+      "damage": 90,
+      "attacksPerSecond": 0.5,
+      "range": 6.0,
+      "hitsAir": true,
+      "defaultTargeting": "strongest",
+      "bossDamageBonus": 0.5
+    },
+    {
+      "id": "chain",
+      "name": "Chain",
+      "hand": 4,
+      "damage": 30,
+      "attacksPerSecond": 1.2,
+      "range": 3.5,
+      "hitsAir": true,
+      "chain": { "bounces": 4, "falloff": 0.15, "radius": 2.0 }
+    },
+    {
+      "id": "elemental",
+      "name": "Elemental",
+      "hand": 5,
+      "damage": 40,
+      "attacksPerSecond": 1.0,
+      "range": 3.5,
+      "hitsAir": true,
+      "splash": 1.0,
+      "suitMultiplier": 2
+    },
+    {
+      "id": "mortar",
+      "name": "Mortar",
+      "hand": 6,
+      "damage": 120,
+      "attacksPerSecond": 0.4,
+      "range": 5.0,
+      "hitsAir": false,
+      "splash": 1.5,
+      "minRange": 1.5
+    },
+    {
+      "id": "laser",
+      "name": "Laser",
+      "hand": 7,
+      "damage": 0,
+      "attacksPerSecond": 0,
+      "range": 4.0,
+      "hitsAir": true,
+      "beam": { "minDps": 60, "maxDps": 300, "rampSeconds": 3 }
+    },
+    {
+      "id": "storm",
+      "name": "Storm",
+      "hand": 8,
+      "damage": 70,
+      "attacksPerSecond": 2.0,
+      "range": 4.5,
+      "hitsAir": true,
+      "chain": { "bounces": 6, "falloff": 0.15, "radius": 2.0 },
+      "suitMultiplier": 2
+    },
+    {
+      "id": "crown",
+      "name": "Crown",
+      "hand": 9,
+      "damage": 400,
+      "attacksPerSecond": 1.0,
+      "range": 5.0,
+      "hitsAir": true,
+      "splash": 2.0,
+      "suitMultiplier": 2,
+      "aura": { "radius": 3, "damageBonus": 0.25 }
+    },
+    {
+      "id": "jester",
+      "name": "Jester",
+      "hand": 10,
+      "damage": 0,
+      "attacksPerSecond": 0,
+      "range": 0,
+      "hitsAir": true,
+      "copy": { "powerMultiplier": 1.5 }
+    }
+  ]
+}
